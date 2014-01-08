@@ -15,7 +15,9 @@
     "redis"
   ],
   "dependencies": [
-    "redis"
+    "redis",
+    "coffee-script",
+    "mocha"
   ],
   "author": "Romain Pechayre <rpechayr@gmail.com>",
   "license": "BSD"
