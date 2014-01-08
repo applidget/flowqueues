@@ -4,10 +4,12 @@ class FlowQueues
   constructor: (@workflowName) ->
     @taskDescriptions = []
     @working = false
-    @timeoutInterval ||= 5000
+    @timeoutInterval ||= 500
     @timeOuts = {}
     @queues = []
     
+    #TODO: testing, remove this later
+    @remainingTasks = 500
   addTaskDescription: (taskDesc) ->
     @taskDescriptions.push taskDesc
   
@@ -15,18 +17,21 @@ class FlowQueues
     return new FlowQueues()
   
   reserveTask:(taskName) ->
-    #TODO
+    if @remainingTasks > 0
+      @remainingTasks -= 1
+      return "Hello"
     return null
     
+    
   performTask: (task, callback) ->
-    log "performing task #{taskName}"
+    log "performing task #{task}"
     #TODO
     callback()
     
   processTaskForName: (taskName) ->
-    callback = () ->
+    callback = () =>
       #closures are so magical ...
-      processTaskForName(taskName)
+      @processTaskForName(taskName)
     log "Searching for task #{taskName}"
     task = @reserveTask(taskName)
     
