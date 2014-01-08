@@ -1,7 +1,12 @@
 class FlowQueues
   constructor: (args) ->
     # body...
-  @addWorkFlow:  =>
+  @addWorkflow: (wf)  =>
+    if ! @workflows?
+      @workflows = []
+    @workflows.push wf
     console.log("workflow added")
+    
+
     
 exports.FlowQueues = FlowQueues
