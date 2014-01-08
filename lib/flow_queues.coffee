@@ -4,4 +4,4 @@ class FlowQueues
   @addWorkFlow:  =>
     console.log("workflow added")
     
-exports = FlowQueues
+exports.FlowQueues = FlowQueues
