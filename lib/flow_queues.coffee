@@ -1,8 +1,12 @@
 class FlowQueues
-  constructor: (args) ->
-    # body...
+  constructor: () ->
+    @taskDescriptions = []
+    
+  addTaskDescription: (taskDesc) ->
+    @taskDescriptions.push taskDesc
+  
   @createWorker: ()  =>
     return new FlowQueues()
-    
+  
 
 exports.FlowQueues = FlowQueues
