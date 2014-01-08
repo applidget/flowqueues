@@ -1,7 +1,7 @@
 FlowQueues = require("../lib/flow_queues").FlowQueues
 assert = require("assert")
 describe "FlowQueues",  ->
-  describe "add workflow",  ->
+  it "adds workflow",  ->
     workflow = "fakeworkflow"
     FlowQueues.addWorkflow(workflow)
     queues = FlowQueues.workflows
