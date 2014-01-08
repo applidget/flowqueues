@@ -29,34 +29,30 @@ class FlowQueues
     callback()
     
   processTaskForName: (taskName) ->
+    if @timeOuts[taskName]? 
+      clearTimeout(@timeOuts[taskName])
+      @timeOuts[taskName] = null
+      
+    #Encapsulating the taskName here thanks to js closures. swag
     callback = () =>
-      #closures are so magical ...
       @processTaskForName(taskName)
+
     log "Searching for task #{taskName}"
     task = @reserveTask(taskName)
-    
     if task?
       @performTask(task, callback)
     else
       log "Will search again for task #{taskName} in #{@timeoutInterval} milliseconds"
-      #TODO: do something is a timeOut is already registered here
       @timeOuts[taskName] = setTimeout(callback, @timeoutInterval)
       
   work: () ->
     if @working == true
-      #TODO: output some warning here
+      log "Warning: Already working"
       return
     for taskDescription in @taskDescriptions
       do (taskDescription) =>
         @processTaskForName(taskDescription)
           
-            
-    
-  #coffeescript syntax makes is difficult with the regular syntax :)
-  reversedTimeout = (time, cbs) ->
-    return setTimeout(cbs, time)
-  
-    
     
     
   
