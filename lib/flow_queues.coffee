@@ -1,4 +1,5 @@
 log = require("util").log
+TaskPerformer = require("./task_performer").TaskPerformer
 
 #TODO: integrate notions of queues
 class FlowQueues
@@ -20,12 +21,17 @@ class FlowQueues
   @createWorker: (dataSource)  =>
     return new FlowQueues(dataSource)
   
-  reserveTask:(taskName) ->
+  reserveJob:(taskName, cbs) ->
     #TODO: implement fetching from redis here
-    return null
+    @dataSource.lpop @pendingQueueNameForTaskName(taskName), (err, res) =>
+      job = null
+      if res?
+        #TODO: store the fact that we are working on a job here. Probably a SET, but this requires generating job ids 
+        job = JSON.parse(res)
+      cbs(job)
 
   jobsDir:() ->
-    return @jobsDir || process.cwd()
+    return @overridenJobDir || process.cwd()
 
   baseKeyName: ->
     return "flowqueues"
@@ -33,21 +39,26 @@ class FlowQueues
   pendingQueueNameForTaskName: (taskName) ->
     return "#{@baseKeyName()}:#{taskName}:pending"
 
-  enqueue:(job, cbs = null) ->
-    taskDesc = @taskDescriptions[@firstTaskName]
-    encodedJob = JSON.stringify(job)
-    @dataSource.rpush @pendingQueueNameForTaskName(taskDesc.name), encodedJob, (err, res) =>
+  enqueueForTask:(taskName, job, cbs = null) ->
+    @dataSource.rpush @pendingQueueNameForTaskName(taskName), job, (err, res) =>
       if cbs?
         #TODO: do something with the results ...
         cbs()
+  
+  enqueue:(job, cbs = null) ->
+    taskDesc = @taskDescriptions[@firstTaskName]
+    encodedJob = JSON.stringify(job)
+    @enqueueForTask(taskDesc.name, encodedJob, cbs)
     
-  performTask: (task, taskDescription, callback) ->
+  performTaskOnJob: (task, taskDescription, callback) ->
     log "performing task #{task}"
-    TaskPerformer.performTask @jobsDir, taskDescription, task, (status) ->
+    #TODO: check if task is modified here. It should be
+    TaskPerformer.performTask @jobsDir(), taskDescription, task, (status) ->
       nextTaskNameDescription = taskDescription.getNextTaskDescription(status)
       #TODO:(2) terminate job is nothing after this task
       #TODO:(1) enqueue to next task here. Not sure processTaskForName should be called here
       #TODO: (3) swap the following two lines and see how it affects performance
+      @enqueueForTask(nextTaskNameDescription.name, encodedJob, cbs)      
       @processTaskForName nextTaskNameDescription.name
       callback()
 
@@ -57,17 +68,18 @@ class FlowQueues
       @timeOuts[taskName] = null
       
     #Encapsulating the taskName here thanks to js closures. swag
-    callback = () =>
+    leCallback = () =>
       @processTaskForName(taskName)
 
     log "Searching for task #{taskName}"
-    task = @reserveTask(taskName)
-    if task?
-      taskDescription = @taskDescriptions[taskName]
-      @performTask(task, taskDescription, callback)
-    else
-      log "Will search again for task #{taskName} in #{@timeoutInterval} milliseconds"
-      @timeOuts[taskName] = setTimeout(callback, @timeoutInterval)
+    @reserveJob taskName, (job) =>      
+      if job?
+        log "Found #{taskName}"
+        taskDescription = @taskDescriptions[taskName]
+        @performTaskOnJob(job, taskDescription, leCallback)
+      else
+        log "Will search again for task #{taskName} in #{@timeoutInterval} milliseconds"
+        @timeOuts[taskName] = setTimeout(leCallback, @timeoutInterval)
       
   stop: () ->
     for key, to in @timeOuts

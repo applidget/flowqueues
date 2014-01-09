@@ -5,8 +5,8 @@ assert = require("assert")
 
 describe "Basic FlowQueues Creation",  ->
   worker = FlowQueues.createWorker(redis)
-  firstTaskDesc = new TaskDescription("firstStep")
-  secondTaskDesc = new TaskDescription("secondStep")
+  firstTaskDesc = new TaskDescription("basic_task")
+  secondTaskDesc = new TaskDescription("basic_task")
   firstTaskDesc.setNextTaskDescription(secondTaskDesc, "success")
   
   worker.addTaskDescription(firstTaskDesc.name, firstTaskDesc)
