@@ -1,27 +1,24 @@
 log = require("util").log
 
 class FlowQueues
-  constructor: (@workflowName) ->
-    @taskDescriptions = []
+  constructor: (@dataSource) ->
+    @taskDescriptions = {}
     @working = false
     @timeoutInterval ||= 500
     @timeOuts = {}
     @queues = []
     
-    #TODO: testing, remove this later
-    @remainingTasks = 500
-  addTaskDescription: (taskDesc) ->
-    @taskDescriptions.push taskDesc
+  addTaskDescription: (name, taskDesc) ->
+    @taskDescriptions[name] = taskDesc
   
   @createWorker: ()  =>
     return new FlowQueues()
   
   reserveTask:(taskName) ->
-    if @remainingTasks > 0
-      @remainingTasks -= 1
-      return "Hello"
     return null
-    
+
+  jobsDir:() ->
+    return @jobsDir || process.cwd()
     
   performTask: (task, callback) ->
     log "performing task #{task}"
@@ -49,12 +46,8 @@ class FlowQueues
     if @working == true
       log "Warning: Already working"
       return
-    for taskDescription in @taskDescriptions
-      do (taskDescription) =>
-        @processTaskForName(taskDescription)
-          
-    
-    
-  
+    for name, taskDescription of @taskDescriptions
+      do (name, taskDescription) =>
+        @processTaskForName(name)
 
 exports.FlowQueues = FlowQueues
