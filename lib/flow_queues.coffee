@@ -1,5 +1,6 @@
 log = require("util").log
 TaskPerformer = require("./task_performer").TaskPerformer
+util = require("util")
 
 #TODO: integrate notions of queues
 class FlowQueues
@@ -27,7 +28,11 @@ class FlowQueues
       job = null
       if res?
         #TODO: store the fact that we are working on a job here. Probably a SET, but this requires generating job ids 
-        job = JSON.parse(res)
+        try
+          job = JSON.parse(res)
+        catch
+          #TODO: why is that ?
+          console.log "PARSING ERROR #{util.inspect(res)}"
       cbs(job)
 
   jobsDir:() ->
@@ -53,14 +58,14 @@ class FlowQueues
   performTaskOnJob: (task, taskDescription, callback) ->
     log "performing task #{task}"
     #TODO: check if task is modified here. It should be
-    TaskPerformer.performTask @jobsDir(), taskDescription, task, (status) ->
+    TaskPerformer.performTask @jobsDir(), taskDescription, task, (status) =>
       nextTaskNameDescription = taskDescription.getNextTaskDescription(status)
       #TODO:(2) terminate job is nothing after this task
       #TODO:(1) enqueue to next task here. Not sure processTaskForName should be called here
       #TODO: (3) swap the following two lines and see how it affects performance
-      @enqueueForTask(nextTaskNameDescription.name, encodedJob, cbs)      
-      @processTaskForName nextTaskNameDescription.name
-      callback()
+      @enqueueForTask nextTaskNameDescription.name, task, () =>
+        @processTaskForName nextTaskNameDescription.name
+        callback()
 
   processTaskForName: (taskName) ->
     if @timeOuts[taskName]? 

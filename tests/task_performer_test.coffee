@@ -10,6 +10,7 @@ describe "TaskPerformer testing",  ->
   worker.overridenJobDir = "./samples"
   basicTaskDesc = new TaskDescription("basic_task")
   it "should perform a basic task", (done) ->
+    console.log "MLKJHGFGHJKLM%LKJHGF"
     taskPerformer = TaskPerformer.performTask "#{process.cwd()}/samples", basicTaskDesc , {}, (status) ->
       done()
     

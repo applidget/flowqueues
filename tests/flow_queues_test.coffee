@@ -5,12 +5,14 @@ assert = require("assert")
 
 describe "Basic FlowQueues Creation",  ->
   worker = FlowQueues.createWorker(redis)
+  worker.overridenJobDir = "#{process.cwd()}/samples"
   firstTaskDesc = new TaskDescription("basic_task")
-  secondTaskDesc = new TaskDescription("basic_task")
+  secondTaskDesc = new TaskDescription("basic_task2")
   firstTaskDesc.setNextTaskDescription(secondTaskDesc, "success")
   
   worker.addTaskDescription(firstTaskDesc.name, firstTaskDesc)
   worker.addTaskDescription(secondTaskDesc.name, secondTaskDesc.name)
+  
   worker.setFirstTaskDescription(firstTaskDesc.name)
   it "should now have 2 task descriptions", () ->
     assert.equal(2, Object.keys(worker.taskDescriptions).length)
