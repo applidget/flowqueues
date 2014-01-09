@@ -32,7 +32,7 @@ class FlowQueues
           job = JSON.parse(res)
         catch
           #TODO: why is that ?
-          console.log "PARSING ERROR #{util.inspect(res)}"
+          console.log "PARSING ERROR #{util.inspect(util.inspect(res))}"
       cbs(job)
 
   jobsDir:() ->
@@ -45,23 +45,23 @@ class FlowQueues
     return "#{@baseKeyName()}:#{taskName}:pending"
 
   enqueueForTask:(taskName, job, cbs = null) ->
-    @dataSource.rpush @pendingQueueNameForTaskName(taskName), job, (err, res) =>
+    console.log("!!!!!! Will stringify #{util.inspect(job)}")
+    encodedJob = JSON.stringify(job)
+    @dataSource.rpush @pendingQueueNameForTaskName(taskName), encodedJob , (err, res) =>
       if cbs?
         #TODO: do something with the results ...
         cbs()
   
   enqueue:(job, cbs = null) ->
     taskDesc = @taskDescriptions[@firstTaskName]
-    encodedJob = JSON.stringify(job)
-    @enqueueForTask(taskDesc.name, encodedJob, cbs)
+    @enqueueForTask(taskDesc.name, job, cbs)
     
   performTaskOnJob: (task, taskDescription, callback) ->
     log "performing task #{task}"
     #TODO: check if task is modified here. It should be
     TaskPerformer.performTask @jobsDir(), taskDescription, task, (status) =>
       nextTaskNameDescription = taskDescription.getNextTaskDescription(status)
-      #TODO:(2) terminate job is nothing after this task
-      #TODO:(1) enqueue to next task here. Not sure processTaskForName should be called here
+      #TODO:(1) terminate job is nothing after this task
       #TODO: (3) swap the following two lines and see how it affects performance
       @enqueueForTask nextTaskNameDescription.name, task, () =>
         @processTaskForName nextTaskNameDescription.name
