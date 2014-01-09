@@ -1,8 +1,11 @@
 log = require("util").log
 
+#TODO: integrate notions of queues
 class FlowQueues
   constructor: (@dataSource) ->
+    log @dataSource
     @taskDescriptions = {}
+    @firstTaskName = null
     @working = false
     @timeoutInterval ||= 500
     @timeOuts = {}
@@ -10,9 +13,12 @@ class FlowQueues
     
   addTaskDescription: (name, taskDesc) ->
     @taskDescriptions[name] = taskDesc
-  
-  @createWorker: ()  =>
-    return new FlowQueues()
+
+  setFirstTaskDescription: (fistTaskName) ->
+    @firstTaskName = fistTaskName
+    
+  @createWorker: (dataSource)  =>
+    return new FlowQueues(dataSource)
   
   reserveTask:(taskName) ->
     #TODO: implement fetching from redis here
@@ -20,6 +26,20 @@ class FlowQueues
 
   jobsDir:() ->
     return @jobsDir || process.cwd()
+
+  baseKeyName: ->
+    return "flowqueues"
+    
+  pendingQueueNameForTaskName: (taskName) ->
+    return "#{@baseKeyName()}:#{taskName}:pending"
+
+  enqueue:(job, cbs = null) ->
+    taskDesc = @taskDescriptions[@firstTaskName]
+    encodedJob = JSON.stringify(job)
+    @dataSource.rpush @pendingQueueNameForTaskName(taskDesc.name), encodedJob, (err, res) =>
+      if cbs?
+        #TODO: do something with the results ...
+        cbs()
     
   performTask: (task, taskDescription, callback) ->
     log "performing task #{task}"

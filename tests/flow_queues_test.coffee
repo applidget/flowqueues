@@ -11,6 +11,7 @@ describe "Basic FlowQueues Creation",  ->
   
   worker.addTaskDescription(firstTaskDesc.name, firstTaskDesc)
   worker.addTaskDescription(secondTaskDesc.name, secondTaskDesc.name)
+  worker.setFirstTaskDescription(firstTaskDesc.name)
   it "should now have 2 task descriptions", () ->
     assert.equal(2, Object.keys(worker.taskDescriptions).length)
   it "should run 2 seconds", (done) ->
@@ -20,6 +21,10 @@ describe "Basic FlowQueues Creation",  ->
       worker.stop()
       done()
     setTimeout(block, 2000)
+  it "should have 1 job pending", (done) ->
+    payload = {first: "First", second: "Second arg", other_arg: "Other arg"}
+    #Let's assume we use the class for enqueuing and working ...
+    worker.enqueue(payload, done)
     
     
   
