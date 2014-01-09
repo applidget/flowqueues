@@ -5,7 +5,6 @@ util = require("util")
 #TODO: integrate notions of queues
 class FlowQueues
   constructor: (@dataSource) ->
-    log @dataSource
     @taskDescriptions = {}
     @firstTaskName = null
     @working = false
@@ -41,6 +40,10 @@ class FlowQueues
   baseKeyName: ->
     return "flowqueues"
     
+  pendingTasksCount: (taskName, cbs) ->
+    @dataSource.llen @pendingQueueNameForTaskName(taskName), (err, res) =>
+      cbs(res)
+      
   pendingQueueNameForTaskName: (taskName) ->
     return "#{@baseKeyName()}:#{taskName}:pending"
 
@@ -63,9 +66,13 @@ class FlowQueues
       nextTaskNameDescription = taskDescription.getNextTaskDescription(status)
       #TODO:(1) terminate job is nothing after this task
       #TODO: (3) swap the following two lines and see how it affects performance
-      @enqueueForTask nextTaskNameDescription.name, task, () =>
-        @processTaskForName nextTaskNameDescription.name
+      console.log "Done !"
+      if !nextTaskNameDescription?
         callback()
+      else
+        @enqueueForTask nextTaskNameDescription.name, task, () =>
+          @processTaskForName nextTaskNameDescription.name
+          callback()
 
   processTaskForName: (taskName) ->
     if @timeOuts[taskName]? 
