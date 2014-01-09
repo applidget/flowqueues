@@ -9,6 +9,6 @@ describe "Basic FlowQueues Creation",  ->
   worker = FlowQueues.createWorker(redis)
   basicTaskDesc = new TaskDescription("basic_task")
   it "should perform a basic task", (done) ->
-    taskPerformer = TaskPerformer.performTask "#{process.cwd()}/tests", basicTaskDesc , {}, (status) ->
+    taskPerformer = TaskPerformer.performTask "#{process.cwd()}/samples", basicTaskDesc , {}, (status) ->
       done()
     
