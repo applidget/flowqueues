@@ -15,16 +15,22 @@ class FlowQueues
     return new FlowQueues()
   
   reserveTask:(taskName) ->
+    #TODO: implement fetching from redis here
     return null
 
   jobsDir:() ->
     return @jobsDir || process.cwd()
     
-  performTask: (task, callback) ->
+  performTask: (task, taskDescription, callback) ->
     log "performing task #{task}"
-    #TODO
-    callback()
-    
+    TaskPerformer.performTask @jobsDir, taskDescription, task, (status) ->
+      nextTaskNameDescription = taskDescription.getNextTaskDescription(status)
+      #TODO:(2) terminate job is nothing after this task
+      #TODO:(1) enqueue to next task here. Not sure processTaskForName should be called here
+      #TODO: (3) swap the following two lines and see how it affects performance
+      @processTaskForName nextTaskNameDescription.name
+      callback()
+
   processTaskForName: (taskName) ->
     if @timeOuts[taskName]? 
       clearTimeout(@timeOuts[taskName])
@@ -37,10 +43,16 @@ class FlowQueues
     log "Searching for task #{taskName}"
     task = @reserveTask(taskName)
     if task?
-      @performTask(task, callback)
+      taskDescription = @taskDescriptions[taskName]
+      @performTask(task, taskDescription, callback)
     else
       log "Will search again for task #{taskName} in #{@timeoutInterval} milliseconds"
       @timeOuts[taskName] = setTimeout(callback, @timeoutInterval)
+      
+  stop: () ->
+    for key, to in @timeOuts
+      do (key, to) ->
+        clearTimeout(to)
       
   work: () ->
     if @working == true

@@ -13,10 +13,16 @@ describe "Basic FlowQueues Creation",  ->
   worker.addTaskDescription(secondTaskDesc.name, secondTaskDesc.name)
   it "should now have 2 task descriptions", () ->
     assert.equal(2, Object.keys(worker.taskDescriptions).length)
+  it "should run 2 seconds", (done) ->
+    worker.work()
+    @timeout(15000)
+    block = ()->
+      worker.stop()
+      done()
+    setTimeout(block, 2000)
     
     
   
 #TODO
-# - Test with fake datasource (lists) **
 # - Make sure a task from the lowest Q is fetched
 #
