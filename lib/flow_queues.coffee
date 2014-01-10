@@ -12,8 +12,8 @@ class FlowQueues
     @timeOuts = {}
     @queues = []
     
-  addTaskDescription: (name, taskDesc) ->
-    @taskDescriptions[name] = taskDesc
+  addTaskDescription: (taskDesc) ->
+    @taskDescriptions[taskDesc.name] = taskDesc
 
   setFirstTaskDescription: (fistTaskName) ->
     @firstTaskName = fistTaskName

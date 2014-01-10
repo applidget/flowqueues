@@ -10,8 +10,8 @@ describe "Basic FlowQueues Creation",  ->
   secondTaskDesc = new TaskDescription("basic_task2")
   firstTaskDesc.setNextTaskDescription(secondTaskDesc, "success")
   
-  worker.addTaskDescription(firstTaskDesc.name, firstTaskDesc)
-  worker.addTaskDescription(secondTaskDesc.name, secondTaskDesc.name)
+  worker.addTaskDescription(firstTaskDesc)
+  worker.addTaskDescription(secondTaskDesc)
   
   worker.setFirstTaskDescription(firstTaskDesc.name)
   it "should now have 2 task descriptions", () ->
