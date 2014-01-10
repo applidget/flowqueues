@@ -3,7 +3,7 @@ TaskDescription = require("../lib/task_description").TaskDescription
 redis = require("redis").createClient()
 
 worker = FlowQueues.createWorker(redis)
-worker.overridenJobDir = "#{process.cwd()}/../tests/samples"
+# worker.overridenJobDir = "#{process.cwd()}/../tests/samples"
 
 firstTaskDesc = new TaskDescription("basic_task")
 secondTaskDesc = new TaskDescription("basic_task2")
@@ -15,12 +15,13 @@ worker.addTaskDescription(secondTaskDesc)
 
 worker.setFirstTaskDescription(firstTaskDesc.name)
 
-worker.work()
+for i in [1..100]
+  job = {arg1: "arg1", arg2: "arg22"}
+  worker.enqueue(job)
+  
+#Wait for a few seconds and close redis connection. This could be better doe by using async.parallel for example
+#but this is just an example
+closeConnection = () ->
+  redis.quit()
+setTimeout closeConnection, 4000
 
-enqueue = () ->
-  for i in [1..10]
-    job = {arg1: "arg1", arg2: "arg22"}
-    worker.enqueue(job)
-
-#Uncomment to enqueue jobs from here. In general you will enqueue them from another process
-# setTimeout enqueue, 5000

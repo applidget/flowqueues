@@ -1,4 +1,7 @@
 exports.run = (jobData) ->
   console.log "Executing basic job (Second kind)"
-  @register("success")
+  cb = () =>
+    @register "success"
+  setTimeout cb, 3000
+  
     

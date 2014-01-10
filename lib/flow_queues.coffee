@@ -37,19 +37,19 @@ class FlowQueues
   jobsDir:() ->
     return @overridenJobDir || process.cwd()
 
-  baseKeyName: ->
-    return "flowqueues"
-    
+
   pendingTasksCount: (taskName, cbs) ->
     @dataSource.llen @pendingQueueNameForTaskName(taskName), (err, res) =>
       cbs(res)
-      
+  baseKeyName: ->
+    return "flowqueues"
+          
   pendingQueueNameForTaskName: (taskName) ->
     return "#{@baseKeyName()}:#{taskName}:pending"
 
   enqueueForTask:(taskName, job, cbs = null) ->
     encodedJob = JSON.stringify(job)
-    @dataSource.rpush @pendingQueueNameForTaskName(taskName), encodedJob , (err, res) =>
+    @dataSource.rpush @pendingQueueNameForTaskName(taskName), encodedJob , (err, _) =>
       if cbs?
         cbs(err)
   
@@ -57,10 +57,9 @@ class FlowQueues
     taskDesc = @taskDescriptions[@firstTaskName]
     @enqueueForTask(taskDesc.name, job, cbs)
     
-  performTaskOnJob: (task, taskDescription, callback) ->
-    log "performing task #{task}"
+  performTaskOnJob: (job, taskDescription, callback) ->
     #TODO: check if task is modified here. It should be
-    TaskPerformer.performTask @jobsDir(), taskDescription, task, (status) =>
+    TaskPerformer.performTask @jobsDir(), taskDescription, job, (status) =>
       nextTaskNameDescription = taskDescription.getNextTaskDescription(status)
       #TODO:(1) terminate job is nothing after this task
       #TODO: (3) swap the following two lines and see how it affects performance
@@ -68,7 +67,7 @@ class FlowQueues
       if !nextTaskNameDescription?
         callback()
       else
-        @enqueueForTask nextTaskNameDescription.name, task, () =>
+        @enqueueForTask nextTaskNameDescription.name, job, () =>
           @processTaskForName nextTaskNameDescription.name
           callback()
 
@@ -89,7 +88,9 @@ class FlowQueues
         @performTaskOnJob(job, taskDescription, leCallback)
       else
         log "Will search again for task #{taskName} in #{@timeoutInterval} milliseconds"
-        @timeOuts[taskName] = setTimeout(leCallback, @timeoutInterval)
+        #TODO: #architecture decide wether we should be able to enqueue stuff directly on intermediate task
+        if taskName == @firstTaskName
+          @timeOuts[taskName] = setTimeout(leCallback, @timeoutInterval)
       
   stop: () ->
     for key, to in @timeOuts
@@ -100,6 +101,8 @@ class FlowQueues
     if @working == true
       log "Warning: Already working"
       return
+
+    @working = true
     for name, taskDescription of @taskDescriptions
       do (name, taskDescription) =>
         @processTaskForName(name)

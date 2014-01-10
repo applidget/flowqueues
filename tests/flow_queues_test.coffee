@@ -8,7 +8,7 @@ describe "Basic FlowQueues Creation",  ->
   worker.overridenJobDir = "#{process.cwd()}/samples"
   firstTaskDesc = new TaskDescription("basic_task")
   secondTaskDesc = new TaskDescription("basic_task2")
-  firstTaskDesc.setNextTaskDescription(secondTaskDesc, "success")
+  firstTaskDesc.setNextTaskDescription("success", secondTaskDesc)
   
   worker.addTaskDescription(firstTaskDesc)
   worker.addTaskDescription(secondTaskDesc)
