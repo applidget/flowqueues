@@ -48,12 +48,10 @@ class FlowQueues
     return "#{@baseKeyName()}:#{taskName}:pending"
 
   enqueueForTask:(taskName, job, cbs = null) ->
-    console.log("!!!!!! Will stringify #{util.inspect(job)}")
     encodedJob = JSON.stringify(job)
     @dataSource.rpush @pendingQueueNameForTaskName(taskName), encodedJob , (err, res) =>
       if cbs?
-        #TODO: do something with the results ...
-        cbs()
+        cbs(err)
   
   enqueue:(job, cbs = null) ->
     taskDesc = @taskDescriptions[@firstTaskName]
