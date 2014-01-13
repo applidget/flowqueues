@@ -14,6 +14,7 @@ class FlowQueues
     @queues = ["critical", "main", "low"]
     #TODO: handle this the redis way
     @lockedForSearch = {}
+    @nbWorkingTasksByName = {}
     
   addTaskDescription: (taskDesc) ->
     @taskDescriptions[taskDesc.name] = taskDesc
@@ -65,22 +66,23 @@ class FlowQueues
 
   workingCountForTaskName:(taskName, cbs) ->
     #TODO replug this later on
-    cbs(0)
+    cbs(@nbWorkingTasksByName[taskName] || 0)
     # @dataSource.llen @workingSetNameForTaskName(taskName), (err, length) =>
     #   cbs(length)
 
   isWorkerAvailableForTaskName:(taskName, cbs) ->
     if @lockedForSearch[taskName] == true
-      cbs(false)
+      cbs(false, 0)
       return      
     @lockedForSearch[taskName] = true
     @workingCountForTaskName taskName, (count) =>
       taskDescription = @taskDescriptions[taskName]
       status = false
+      log "max parallel instances for #{taskName} is #{taskDescription.maxParallelInstances}"
       if count < taskDescription.maxParallelInstances
         status = true
       @lockedForSearch[taskName] = false
-      cbs(status)
+      cbs(status, taskDescription.maxParallelInstances - count)
     
   enqueueForTask:(taskName, job, queue, cbs = null) ->
     encodedJob = @encode(job)
@@ -121,11 +123,14 @@ class FlowQueues
 
     #TODO: check if task is modified here. It should be !
     #TODO: register task as running in redis here
+    @nbWorkingTasksByName[taskDescription.name] ||= 0
+    @nbWorkingTasksByName[taskDescription.name] += 1
     @registerJobInProgress job, taskDescription.name, (err) =>      
       #Redis has taken over on the lock ...
       TaskPerformer.performTask @jobsDir(), taskDescription, job, (status) =>
         #@lockedForSearch[taskDescription.name] = false
         @unregisterJobInProgress job, taskDescription.name, (err) =>
+          @nbWorkingTasksByName[taskDescription.name] -= 1
           nextTaskNameDescription = taskDescription.getNextTaskDescription(status)
           log "Done #{taskDescription.name}!"
           if !nextTaskNameDescription?
@@ -141,11 +146,12 @@ class FlowQueues
       @timeOuts[taskName] = null
     
     #TODO: handle this in a smarter way
-    @isWorkerAvailableForTaskName taskName, (isAvailable) =>
+    @isWorkerAvailableForTaskName taskName, (isAvailable, howMany) =>
       if !isAvailable
         log "Task #{taskName}  locked !"
         return
 
+      @lockedForSearch[taskName] = true
       taskDescription = @taskDescriptions[taskName]
       log "Task #{taskName} not locked"
       #TODO: the following will be asynchronous later
@@ -167,6 +173,8 @@ class FlowQueues
         if foundJob?
           log "Got #{taskName}"
           @performTaskOnJob(foundJob, taskDescription, @queues[queueIndex], leCallback)
+          if howMany > 1
+            leCallback()
         else
           if taskName == @firstTaskName
             #log "Will search again for task #{taskName} in #{@timeoutInterval} milliseconds"
