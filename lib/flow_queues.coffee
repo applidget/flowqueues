@@ -2,6 +2,7 @@ log = require("util").log
 TaskPerformer = require("./task_performer").TaskPerformer
 util = require("util")
 async = require "async"
+os = require "os"
 
 #TODO: integrate notions of queues
 class FlowQueues
@@ -17,6 +18,9 @@ class FlowQueues
     
   addTaskDescription: (taskDesc) ->
     @taskDescriptions[taskDesc.name] = taskDesc
+
+  hostname:() ->
+    return os.hostname()
 
   setFirstTaskDescription: (fistTaskName) ->
     @firstTaskName = fistTaskName
@@ -43,11 +47,18 @@ class FlowQueues
   pendingTasksCount: (taskName, cbs) ->
     @dataSource.llen @pendingQueueNameForTaskName(taskName), (err, res) =>
       cbs(res)
+
   baseKeyName: ->
     return "flowqueues"
+  
+  baseQueueNameForTask:(taskName) ->
+    return "#{@baseKeyName()}:#{@hostname()}:#{taskName}"
           
   pendingQueueNameForTaskName: (taskName, queue) ->
-    return "#{@baseKeyName()}:#{taskName}:#{queue}:pending"
+    return "#{@baseQueueNameForTask(taskName)}:#{queue}:pending"
+
+  workingSetNameForTaskName:(taskName) ->
+    return "#{@baseQueueNameForTask()}:working"
 
   enqueueForTask:(taskName, job, queue, cbs = null) ->
     encodedJob = JSON.stringify(job)
@@ -82,12 +93,18 @@ class FlowQueues
           callback()
 
   processTaskForName: (taskName) ->
+
     if @timeOuts[taskName]? 
       clearTimeout(@timeOuts[taskName])
       @timeOuts[taskName] = null
+    
     #TODO: handle this in a smarter way
     if @processing[taskName] == true
       return
+
+    # #TODO: the following will be asynchronous later
+    @processing[taskName] = true
+
     #Encapsulating the taskName here thanks to js closures. swag
     leCallback = () =>
       @processTaskForName(taskName)
@@ -106,6 +123,7 @@ class FlowQueues
         taskDescription = @taskDescriptions[taskName]
         @performTaskOnJob(foundJob, taskDescription, @queues[queueIndex], leCallback)
       else
+        @processing[taskName] = false
         if taskName == @firstTaskName
           #log "Will search again for task #{taskName} in #{@timeoutInterval} milliseconds"
           @timeOuts[taskName] = setTimeout(leCallback, @timeoutInterval)
