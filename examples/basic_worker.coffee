@@ -17,10 +17,6 @@ worker.setFirstTaskDescription(firstTaskDesc.name)
 
 worker.work()
 
-enqueue = () ->
-  for i in [1..10]
-    job = {arg1: "arg1", arg2: "arg22"}
-    worker.enqueue(job)
 
 #Uncomment to enqueue jobs from here. In general you will enqueue them from another process
 # setTimeout enqueue, 5000

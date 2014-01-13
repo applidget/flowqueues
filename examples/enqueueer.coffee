@@ -15,11 +15,11 @@ worker.addTaskDescription(secondTaskDesc)
 
 worker.setFirstTaskDescription(firstTaskDesc.name)
 
-for i in [1..20000]
+for i in [1..30]
   job = {arg1: "arg1", arg2: "arg22"}
   worker.enqueueTo(job, "low")
   
-#Wait for a few seconds and close redis connection. This could be better doe by using async.parallel for example
+#Wait for a few seconds and close redis connection. This could be better done by using async.parallel for example
 #but this is just an example
 closeConnection = () ->
   redis.quit()
