@@ -1,6 +1,7 @@
 log = require("util").log
 TaskPerformer = require("./task_performer").TaskPerformer
 util = require("util")
+async = require "async"
 
 #TODO: integrate notions of queues
 class FlowQueues
@@ -10,7 +11,7 @@ class FlowQueues
     @working = false
     @timeoutInterval ||= 500
     @timeOuts = {}
-    @queues = []
+    @queues = ["critical", "main", "low"]
     
   addTaskDescription: (taskDesc) ->
     @taskDescriptions[taskDesc.name] = taskDesc
@@ -21,9 +22,9 @@ class FlowQueues
   @createWorker: (dataSource)  =>
     return new FlowQueues(dataSource)
   
-  reserveJob:(taskName, cbs) ->
+  reserveJob:(taskName, queue, cbs) ->
     #TODO: implement fetching from redis here
-    @dataSource.lpop @pendingQueueNameForTaskName(taskName), (err, res) =>
+    @dataSource.lpop @pendingQueueNameForTaskName(taskName, queue), (err, res) =>
       job = null
       if res?
         #TODO: store the fact that we are working on a job here. Probably a SET, but this requires generating job ids 
@@ -31,12 +32,11 @@ class FlowQueues
           job = JSON.parse(res)
         catch
           #TODO: why is that ?
-          console.log "PARSING ERROR #{util.inspect(util.inspect(res))}"
+          log "PARSING ERROR: #{util.inspect(util.inspect(res))}"
       cbs(job)
 
   jobsDir:() ->
     return @overridenJobDir || process.cwd()
-
 
   pendingTasksCount: (taskName, cbs) ->
     @dataSource.llen @pendingQueueNameForTaskName(taskName), (err, res) =>
@@ -44,30 +44,36 @@ class FlowQueues
   baseKeyName: ->
     return "flowqueues"
           
-  pendingQueueNameForTaskName: (taskName) ->
-    return "#{@baseKeyName()}:#{taskName}:pending"
+  pendingQueueNameForTaskName: (taskName, queue) ->
+    return "#{@baseKeyName()}:#{taskName}:#{queue}:pending"
 
-  enqueueForTask:(taskName, job, cbs = null) ->
+  enqueueForTask:(taskName, job, queue, cbs = null) ->
     encodedJob = JSON.stringify(job)
-    @dataSource.rpush @pendingQueueNameForTaskName(taskName), encodedJob , (err, _) =>
+    @dataSource.rpush @pendingQueueNameForTaskName(taskName, queue), encodedJob , (err, _) =>
       if cbs?
         cbs(err)
   
   enqueue:(job, cbs = null) ->
-    taskDesc = @taskDescriptions[@firstTaskName]
-    @enqueueForTask(taskDesc.name, job, cbs)
+    queue = "main"
+    if  @queues.length > 0 
+      queue = @queues[0]
+    @enqueue_to job, queue, cbs
     
-  performTaskOnJob: (job, taskDescription, callback) ->
+  enqueue_to: (job, queue, cbs = null) ->
+    taskDesc = @taskDescriptions[@firstTaskName]
+    @enqueueForTask(taskDesc.name, job, queue, cbs)
+    
+  performTaskOnJob: (job, taskDescription, queue, callback) ->
     #TODO: check if task is modified here. It should be
     TaskPerformer.performTask @jobsDir(), taskDescription, job, (status) =>
       nextTaskNameDescription = taskDescription.getNextTaskDescription(status)
       #TODO:(1) terminate job is nothing after this task
       #TODO: (3) swap the following two lines and see how it affects performance
-      console.log "Done !"
+      log "Done #{taskDescription.name}!"
       if !nextTaskNameDescription?
         callback()
       else
-        @enqueueForTask nextTaskNameDescription.name, job, () =>
+        @enqueueForTask nextTaskNameDescription.name, job, queue, () =>
           @processTaskForName nextTaskNameDescription.name
           callback()
 
@@ -80,18 +86,33 @@ class FlowQueues
     leCallback = () =>
       @processTaskForName(taskName)
 
-    log "Searching for task #{taskName}"
-    @reserveJob taskName, (job) =>      
-      if job?
-        log "Found #{taskName}"
+    queueIndex = 0
+    foundJob = null
+    #This is an async implementation of a break in a for loop using the "async" framework
+    #Will determine if we should go for the next queue
+    test = () =>
+      return !foundJob? && queueIndex < @queues.length
+    
+    #Happens when job has been found or all queues are empty
+    finalStep = (err) =>
+      if foundJob?
+        log "Got #{taskName}"
         taskDescription = @taskDescriptions[taskName]
-        @performTaskOnJob(job, taskDescription, leCallback)
+        @performTaskOnJob(foundJob, taskDescription, @queues[queueIndex], leCallback)
       else
-        log "Will search again for task #{taskName} in #{@timeoutInterval} milliseconds"
-        #TODO: #architecture decide wether we should be able to enqueue stuff directly on intermediate task
         if taskName == @firstTaskName
+          #log "Will search again for task #{taskName} in #{@timeoutInterval} milliseconds"
           @timeOuts[taskName] = setTimeout(leCallback, @timeoutInterval)
-      
+        
+    block = (cbs) =>
+      @reserveJob taskName, @queues[queueIndex], (job) =>
+        if job?
+          foundJob = job
+        else
+          queueIndex += 1
+        cbs()
+    async.whilst test, block, finalStep
+    
   stop: () ->
     for key, to in @timeOuts
       do (key, to) ->

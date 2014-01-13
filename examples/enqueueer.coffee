@@ -15,9 +15,9 @@ worker.addTaskDescription(secondTaskDesc)
 
 worker.setFirstTaskDescription(firstTaskDesc.name)
 
-for i in [1..100]
+for i in [1..100000]
   job = {arg1: "arg1", arg2: "arg22"}
-  worker.enqueue(job)
+  worker.enqueue_to(job, "low")
   
 #Wait for a few seconds and close redis connection. This could be better doe by using async.parallel for example
 #but this is just an example
