@@ -12,6 +12,8 @@ class FlowQueues
     @timeoutInterval ||= 500
     @timeOuts = {}
     @queues = ["critical", "main", "low"]
+    #TODO: handle this the redis way
+    @processing = {}
     
   addTaskDescription: (taskDesc) ->
     @taskDescriptions[taskDesc.name] = taskDesc
@@ -57,15 +59,17 @@ class FlowQueues
     queue = "main"
     if  @queues.length > 0 
       queue = @queues[0]
-    @enqueue_to job, queue, cbs
+    @enqueueTo job, queue, cbs
     
-  enqueue_to: (job, queue, cbs = null) ->
+  enqueueTo: (job, queue, cbs = null) ->
     taskDesc = @taskDescriptions[@firstTaskName]
     @enqueueForTask(taskDesc.name, job, queue, cbs)
     
   performTaskOnJob: (job, taskDescription, queue, callback) ->
+    @processing[taskDescription.name] = true
     #TODO: check if task is modified here. It should be
     TaskPerformer.performTask @jobsDir(), taskDescription, job, (status) =>
+      @processing[taskDescription.name] = false
       nextTaskNameDescription = taskDescription.getNextTaskDescription(status)
       #TODO:(1) terminate job is nothing after this task
       #TODO: (3) swap the following two lines and see how it affects performance
@@ -81,7 +85,9 @@ class FlowQueues
     if @timeOuts[taskName]? 
       clearTimeout(@timeOuts[taskName])
       @timeOuts[taskName] = null
-      
+    #TODO: handle this in a smarter way
+    if @processing[taskName] == true
+      return
     #Encapsulating the taskName here thanks to js closures. swag
     leCallback = () =>
       @processTaskForName(taskName)
