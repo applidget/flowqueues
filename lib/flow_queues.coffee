@@ -17,9 +17,30 @@ class FlowQueues
     @nbWorkingTasksByName = {}
     @lockedCountForTaskName = {}
     
+    @backendRequestBusy = false
+    @backendRequestsQueue = []
+    
   addTaskDescription: (taskDesc) ->
     @taskDescriptions[taskDesc.name] = taskDesc
 
+  scheduleBackendRequest: (request) ->
+    log "Scheduled (busy = #{@backendRequestBusy})"
+    @backendRequestsQueue.push request
+    if @backendRequestBusy == false
+      @processBackendRequest()
+
+  processBackendRequest:() ->
+    if @backendRequestsQueue.length == 0
+      log "Nothing"
+      return
+    request = @backendRequestsQueue.shift()
+    @backendRequestBusy = true
+    log "Launching request"
+    request () =>
+      log "Request done"
+      @backendRequestBusy = false
+      @processTaskForName()
+  
   hostname:() ->
     return os.hostname()
 
