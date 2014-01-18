@@ -39,7 +39,7 @@ class FlowQueues
     request () =>
       log "Request done"
       @backendRequestBusy = false
-      @processTaskForName()
+      @processBackendRequest()
   
   hostname:() ->
     return os.hostname()
@@ -68,28 +68,31 @@ class FlowQueues
       cbs(job)
       
   reserveJob: (taskName, foundJobCbs, queue) ->
-    queueIndex = 0
-    foundJob = null
-    #This is an async implementation of a break in a for loop using the "async" framework
-    #This determines if we should go for the next queue
-    test = () =>
-      return !foundJob? && queueIndex < @queues.length
+    @scheduleBackendRequest (next) =>
+      queueIndex = 0
+      foundJob = null
+      #This is an async implementation of a break in a for loop using the "async" framework
+      #This determines if we should go for the next queue
+      test = () =>
+        return !foundJob? && queueIndex < @queues.length
   
-    #Happens when job has been found or all queues are empty
-    finalStep = (err) =>
-      @unlockTaskName(taskName)
-      foundJobCbs(foundJob, @queues[queueIndex])
+      #Happens when job has been found or all queues are empty
+      finalStep = (err) =>
+        @unlockTaskName(taskName)
+        next()
+        foundJobCbs(foundJob, @queues[queueIndex])
       
-    block = (cbs) =>
-      @reserveJobOnQueue taskName, @queues[queueIndex], (job) =>
-        if job?
-          foundJob = job
-        else
-          queueIndex += 1
-        cbs()
+      block = (cbs) =>
+        @reserveJobOnQueue taskName, @queues[queueIndex], (job) =>
+          if job?
+            foundJob = job
+          else
+            queueIndex += 1
+          cbs()
+          
     
-    @lockTaskName(taskName)
-    async.whilst test, block, finalStep
+      @lockTaskName(taskName)
+      async.whilst test, block, finalStep
     
   jobsDir:() ->
     return @overridenJobDir || process.cwd()
