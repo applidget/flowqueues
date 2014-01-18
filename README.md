@@ -1,6 +1,6 @@
 #Flowqueues
 
-Flowqueues is library providing queue based processing for node.js. It is developped using Coffee Script but is distributed as a standard javascript package. It is Coffee Script aware though since it can load and run jobs written in Coffee Script.
+Flowqueues is library providing queue based processing for node.js. It is developped using Coffee Script but is distributed as a regular javascript package. It is Coffee Script aware though since it can load and run jobs written in Coffee Script.
 
 ##Features
 
