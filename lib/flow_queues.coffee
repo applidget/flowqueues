@@ -24,20 +24,16 @@ class FlowQueues
     @taskDescriptions[taskDesc.name] = taskDesc
 
   scheduleBackendRequest: (request) ->
-    log "Scheduled (busy = #{@backendRequestBusy})"
     @backendRequestsQueue.push request
     if @backendRequestBusy == false
       @processBackendRequest()
 
   processBackendRequest:() ->
     if @backendRequestsQueue.length == 0
-      log "Nothing"
       return
     request = @backendRequestsQueue.shift()
     @backendRequestBusy = true
-    log "Launching request"
     request () =>
-      log "Request done"
       @backendRequestBusy = false
       @processBackendRequest()
   
@@ -68,31 +64,29 @@ class FlowQueues
       cbs(job)
       
   reserveJob: (taskName, foundJobCbs, queue) ->
-    @scheduleBackendRequest (next) =>
-      queueIndex = 0
-      foundJob = null
-      #This is an async implementation of a break in a for loop using the "async" framework
-      #This determines if we should go for the next queue
-      test = () =>
-        return !foundJob? && queueIndex < @queues.length
-  
-      #Happens when job has been found or all queues are empty
-      finalStep = (err) =>
-        @unlockTaskName(taskName)
-        next()
-        foundJobCbs(foundJob, @queues[queueIndex])
-      
-      block = (cbs) =>
-        @reserveJobOnQueue taskName, @queues[queueIndex], (job) =>
-          if job?
-            foundJob = job
-          else
-            queueIndex += 1
-          cbs()
-          
+    queueIndex = 0
+    foundJob = null
+    #This is an async implementation of a break in a for loop using the "async" framework
+    #This determines if we should go for the next queue
+    test = () =>
+      return !foundJob? && queueIndex < @queues.length
+
+    #Happens when job has been found or all queues are empty
+    finalStep = (err) =>
+      @unlockTaskName(taskName)
+      foundJobCbs(foundJob, @queues[queueIndex])
     
-      @lockTaskName(taskName)
-      async.whilst test, block, finalStep
+    block = (cbs) =>
+      @reserveJobOnQueue taskName, @queues[queueIndex], (job) =>
+        if job?
+          foundJob = job
+        else
+          queueIndex += 1
+        cbs()
+        
+  
+    @lockTaskName(taskName)
+    async.whilst test, block, finalStep
     
   jobsDir:() ->
     return @overridenJobDir || process.cwd()
@@ -182,7 +176,7 @@ class FlowQueues
     @lockedCountForTaskName[taskName] ||= 0
     return @lockedCountForTaskName[taskName] > 0
     
-  performTaskOnJob: (job, taskDescription, queue, callback) ->
+  performTaskOnJob: (job, taskDescription, queue, next,  callback) ->
     #TODO: check if task is modified here. It should be !
     #TODO: register task as running in redis here
     @nbWorkingTasksByName[taskDescription.name] ||= 0
@@ -192,54 +186,59 @@ class FlowQueues
       @unlockTaskName(taskDescription.name)
       #TODO: next tick
       #Redis has taken over on the lock ...
+      next()
       TaskPerformer.performTask @jobsDir(), taskDescription, job, (status) =>
-        @unregisterJobInProgress job, taskDescription.name, (err) =>
-          @nbWorkingTasksByName[taskDescription.name] -= 1
-          nextTaskNameDescription = taskDescription.getNextTaskDescription(status)
-          log "Done #{taskDescription.name}!"
-          if !nextTaskNameDescription?
-            callback()
-          else
-            @enqueueForTask nextTaskNameDescription.name, job, queue, () =>
-              @processTaskForName nextTaskNameDescription.name
+        @scheduleBackendRequest (done) =>
+          @unregisterJobInProgress job, taskDescription.name, (err) =>
+            done()
+            @nbWorkingTasksByName[taskDescription.name] -= 1
+            nextTaskNameDescription = taskDescription.getNextTaskDescription(status)
+            log "Done #{taskDescription.name}!"
+            if !nextTaskNameDescription?
               callback()
+            else
+              @enqueueForTask nextTaskNameDescription.name, job, queue, () =>
+                @processTaskForName nextTaskNameDescription.name
+                callback()
   
   processTaskForName: (taskName, previouslyRemaining = 0) ->
-    #Why Are we here ? 
-    #1. Timeout fired
-    #2. Task Completed
-    
-    if @timeOuts[taskName]? 
-      clearTimeout(@timeOuts[taskName])
-      @timeOuts[taskName] = null
+    @scheduleBackendRequest (next) =>
+      log "Process"
+      #Why Are we here ? 
+      #1. Timeout fired
+      #2. Task Completed
+      if @timeOuts[taskName]? 
+        clearTimeout(@timeOuts[taskName])
+        @timeOuts[taskName] = null
 
-    leCallback = (nowRemaining = 0) =>
-      @processTaskForName(taskName, nowRemaining)    
+      leCallback = (nowRemaining = 0) =>
+        @processTaskForName(taskName, nowRemaining)    
     
-    schedulePolling =  () =>
-      if taskName == @firstTaskName
-        #log "Will search again for task #{taskName} in #{@timeoutInterval} milliseconds"
-        @timeOuts[taskName] = setTimeout(leCallback, @timeoutInterval)
+      schedulePolling =  () =>
+        if taskName == @firstTaskName
+          #log "Will search again for task #{taskName} in #{@timeoutInterval} milliseconds"
+          @timeOuts[taskName] = setTimeout(leCallback, @timeoutInterval)
         
-    #TODO: handle this in a smarter way
-    @isWorkerAvailableForTaskName taskName, previouslyRemaining, (isAvailable, howMany) =>
-      if !isAvailable
-        #log "!!!!!!!!!!!!! Task #{taskName}  locked !"
-        #schedulePolling(taskName)
-        return
-      
-      taskDescription = @taskDescriptions[taskName]
-      #log "Task #{taskName} not locked"
-      @reserveJob taskName, (foundJob, queue) =>
-        #TODO the issue here is that the number of remaining slots is no longer true
-        if foundJob?
-          log "Got #{taskName} (#{howMany})"
-          #will be unlocked later (after being registered)
-          if howMany > 1
-            leCallback(howMany - 1)
-          @performTaskOnJob(foundJob, taskDescription, queue, leCallback)
-        else
-          schedulePolling()
+      #TODO: handle this in a smarter way
+      @isWorkerAvailableForTaskName taskName, previouslyRemaining, (isAvailable, howMany) =>
+        if !isAvailable
+          #log "!!!!!!!!!!!!! Task #{taskName}  locked !"
+          #schedulePolling(taskName)
+          next()
+          return
+        taskDescription = @taskDescriptions[taskName]
+        #log "Task #{taskName} not locked"
+        @reserveJob taskName, (foundJob, queue) =>
+          #TODO the issue here is that the number of remaining slots is no longer true
+          if foundJob?
+            log "Got #{taskName} (#{howMany})"
+            #will be unlocked later (after being registered)
+            if howMany > 1
+              leCallback(howMany - 1)
+            @performTaskOnJob(foundJob, taskDescription, queue, next, leCallback)
+          else
+            next()
+            schedulePolling()
     
   stop: () ->
     for key, to in @timeOuts
