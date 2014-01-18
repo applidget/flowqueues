@@ -15,7 +15,7 @@ worker.addTaskDescription(secondTaskDesc)
 
 worker.setFirstTaskDescription(firstTaskDesc.name)
 
-for i in [1..800]
+for i in [1..1000]
   job = {arg1: "arg1", arg2: "arg22"}
   worker.enqueueTo(job, "low")
   

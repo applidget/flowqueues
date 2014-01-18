@@ -9,12 +9,13 @@ class FlowQueues
     @taskDescriptions = {}
     @firstTaskName = null
     @working = false
-    @timeoutInterval ||= 500
+    @timeoutInterval ||= 5000
     @timeOuts = {}
-    @queues = ["critical", "main", "low"]
+    @queues = ["fourth", "fifth", "critical", "main", "low"]
     #TODO: handle this the redis way
     @lockedForSearch = {}
     @nbWorkingTasksByName = {}
+    @lockedCountForTaskName = {}
     
   addTaskDescription: (taskDesc) ->
     @taskDescriptions[taskDesc.name] = taskDesc
@@ -40,11 +41,35 @@ class FlowQueues
       log "PARSING ERROR: #{util.inspect(util.inspect(json))}"
     return res
   
-  reserveJob:(taskName, queue, cbs) ->
+  reserveJobOnQueue:(taskName, queue, cbs) ->
     @dataSource.lpop @pendingQueueNameForTaskName(taskName, queue), (err, res) =>
       job = @decode(res)
       cbs(job)
-
+      
+  reserveJob: (taskName, foundJobCbs, queue) ->
+    queueIndex = 0
+    foundJob = null
+    #This is an async implementation of a break in a for loop using the "async" framework
+    #This determines if we should go for the next queue
+    test = () =>
+      return !foundJob? && queueIndex < @queues.length
+  
+    #Happens when job has been found or all queues are empty
+    finalStep = (err) =>
+      @unlockTaskName(taskName)
+      foundJobCbs(foundJob, @queues[queueIndex])
+      
+    block = (cbs) =>
+      @reserveJobOnQueue taskName, @queues[queueIndex], (job) =>
+        if job?
+          foundJob = job
+        else
+          queueIndex += 1
+        cbs()
+    
+    @lockTaskName(taskName)
+    async.whilst test, block, finalStep
+    
   jobsDir:() ->
     return @overridenJobDir || process.cwd()
 
@@ -55,6 +80,7 @@ class FlowQueues
   baseKeyName: ->
     return "flowqueues"
   
+  #TODO: at least the first queue in the workflow must be hostname independant 
   baseQueueNameForTask:(taskName) ->
     return "#{@baseKeyName()}:#{@hostname()}:#{taskName}"
           
@@ -62,26 +88,25 @@ class FlowQueues
     return "#{@baseQueueNameForTask(taskName)}:#{queue}:pending"
 
   workingSetNameForTaskName:(taskName) ->
-    return "#{@baseQueueNameForTask()}:working"
+    return "#{@baseQueueNameForTask(taskName)}:working"
 
   workingCountForTaskName:(taskName, cbs) ->
-    #TODO replug this later on
-    cbs(@nbWorkingTasksByName[taskName] || 0)
-    # @dataSource.llen @workingSetNameForTaskName(taskName), (err, length) =>
-    #   cbs(length)
+    @dataSource.llen @workingSetNameForTaskName(taskName), (err, length) =>
+      cbs(length)
 
-  isWorkerAvailableForTaskName:(taskName, cbs) ->
-    if @lockedForSearch[taskName] == true
+  isWorkerAvailableForTaskName:(taskName, previouslyRemaining, cbs) ->
+    if previouslyRemaining > 0
+      cbs(true, previouslyRemaining)
+    if @isTaskNameLocked(taskName) == true
       cbs(false, 0)
       return      
-    @lockedForSearch[taskName] = true
+    @lockTaskName(taskName)
     @workingCountForTaskName taskName, (count) =>
       taskDescription = @taskDescriptions[taskName]
       status = false
-      log "max parallel instances for #{taskName} is #{taskDescription.maxParallelInstances}"
       if count < taskDescription.maxParallelInstances
         status = true
-      @lockedForSearch[taskName] = false
+      @unlockTaskName(taskName)
       cbs(status, taskDescription.maxParallelInstances - count)
     
   enqueueForTask:(taskName, job, queue, cbs = null) ->
@@ -101,34 +126,49 @@ class FlowQueues
     @enqueueForTask(taskDesc.name, job, queue, cbs)
 
   registerJobInProgress:(job, taskName, cbs) ->
-
-    cbs(null)
-    # #TODO: the encoded data should be already available
-    # data = @encode(cbs)
-    # @dataSource.rpush @workingSetNameForTaskName(taskName), data, (err, _) =>
-    #   cbs(err)
+    #TODO: the encoded data should be already available
+    data = @encode(cbs)
+    @dataSource.rpush @workingSetNameForTaskName(taskName), data, (err, _) =>
+      cbs(err)
 
   unregisterJobInProgress:(job, taskName, cbs = null) ->
-    #TODO: replug this later on
-    cbs(null)
-    # 
-    # data = @encode(cbs)
-    # key = @workingSetNameForTaskName(taskName)
-    # @dataSource.lrem key, 0, data, (err, _) =>
-    #   if cbs?
-    #     cbs(err)
-      
-  performTaskOnJob: (job, taskDescription, queue, callback) ->
-    #@lockedForSearch[taskDescription.name] = true
+    @lockTaskName(taskName)
+    data = @encode(cbs)
+    key = @workingSetNameForTaskName(taskName)
+    @dataSource.lrem key, 0, data, (err, _) =>
+      @unlockTaskName(taskName)
+      if cbs?
+        cbs(err)
+  
+  lockTaskName: (taskName) ->
+    @lockedCountForTaskName[taskName] ||= 0
+    @lockedCountForTaskName[taskName] += 1
+    #log " ----------> Task #{taskName} lock closed (#{@lockedCountForTaskName[taskName]})"
+    @lockedForSearch[taskName] = true
 
+  unlockTaskName: (taskName) ->
+    @lockedCountForTaskName[taskName] ||= 0
+    @lockedCountForTaskName[taskName] -= 1
+    #log "------------------> Task #{taskName} lock open (#{@lockedCountForTaskName[taskName]})"
+    # if @lockedCountForTaskName[taskName] > 0
+#       log " !!!!!!!!!!!!!!!!!!! Task #{taskName} still locked (#{@lockedCountForTaskName[taskName]})"
+    @lockedForSearch[taskName] = false
+  
+  isTaskNameLocked: (taskName) ->
+    @lockedCountForTaskName[taskName] ||= 0
+    return @lockedCountForTaskName[taskName] > 0
+    
+  performTaskOnJob: (job, taskDescription, queue, callback) ->
     #TODO: check if task is modified here. It should be !
     #TODO: register task as running in redis here
     @nbWorkingTasksByName[taskDescription.name] ||= 0
     @nbWorkingTasksByName[taskDescription.name] += 1
+    @lockTaskName(taskDescription.name)
     @registerJobInProgress job, taskDescription.name, (err) =>      
+      @unlockTaskName(taskDescription.name)
+      #TODO: next tick
       #Redis has taken over on the lock ...
       TaskPerformer.performTask @jobsDir(), taskDescription, job, (status) =>
-        #@lockedForSearch[taskDescription.name] = false
         @unregisterJobInProgress job, taskDescription.name, (err) =>
           @nbWorkingTasksByName[taskDescription.name] -= 1
           nextTaskNameDescription = taskDescription.getNextTaskDescription(status)
@@ -139,55 +179,43 @@ class FlowQueues
             @enqueueForTask nextTaskNameDescription.name, job, queue, () =>
               @processTaskForName nextTaskNameDescription.name
               callback()
-
-  processTaskForName: (taskName) ->
+  
+  processTaskForName: (taskName, previouslyRemaining = 0) ->
+    #Why Are we here ? 
+    #1. Timeout fired
+    #2. Task Completed
+    
     if @timeOuts[taskName]? 
       clearTimeout(@timeOuts[taskName])
       @timeOuts[taskName] = null
+
+    leCallback = (nowRemaining = 0) =>
+      @processTaskForName(taskName, nowRemaining)    
     
-    #TODO: handle this in a smarter way
-    @isWorkerAvailableForTaskName taskName, (isAvailable, howMany) =>
-      if !isAvailable
-        log "Task #{taskName}  locked !"
-        return
-
-      @lockedForSearch[taskName] = true
-      taskDescription = @taskDescriptions[taskName]
-      log "Task #{taskName} not locked"
-      #TODO: the following will be asynchronous later
-
-      #Encapsulating the taskName here thanks to js closures. swag
-      leCallback = () =>
-        @processTaskForName(taskName)
-
-      queueIndex = 0
-      foundJob = null
-      #This is an async implementation of a break in a for loop using the "async" framework
-      #This determines if we should go for the next queue
-      test = () =>
-        return !foundJob? && queueIndex < @queues.length
-    
-      #Happens when job has been found or all queues are empty
-      finalStep = (err) =>
-        @lockedForSearch[taskName] = false
-        if foundJob?
-          log "Got #{taskName}"
-          @performTaskOnJob(foundJob, taskDescription, @queues[queueIndex], leCallback)
-          if howMany > 1
-            leCallback()
-        else
-          if taskName == @firstTaskName
-            #log "Will search again for task #{taskName} in #{@timeoutInterval} milliseconds"
-            @timeOuts[taskName] = setTimeout(leCallback, @timeoutInterval)
+    schedulePolling =  () =>
+      if taskName == @firstTaskName
+        #log "Will search again for task #{taskName} in #{@timeoutInterval} milliseconds"
+        @timeOuts[taskName] = setTimeout(leCallback, @timeoutInterval)
         
-      block = (cbs) =>
-        @reserveJob taskName, @queues[queueIndex], (job) =>
-          if job?
-            foundJob = job
-          else
-            queueIndex += 1
-          cbs()
-      async.whilst test, block, finalStep
+    #TODO: handle this in a smarter way
+    @isWorkerAvailableForTaskName taskName, previouslyRemaining, (isAvailable, howMany) =>
+      if !isAvailable
+        #log "!!!!!!!!!!!!! Task #{taskName}  locked !"
+        #schedulePolling(taskName)
+        return
+      
+      taskDescription = @taskDescriptions[taskName]
+      #log "Task #{taskName} not locked"
+      @reserveJob taskName, (foundJob, queue) =>
+        #TODO the issue here is that the number of remaining slots is no longer true
+        if foundJob?
+          log "Got #{taskName} (#{howMany})"
+          #will be unlocked later (after being registered)
+          if howMany > 1
+            leCallback(howMany - 1)
+          @performTaskOnJob(foundJob, taskDescription, queue, leCallback)
+        else
+          schedulePolling()
     
   stop: () ->
     for key, to in @timeOuts
@@ -195,11 +223,10 @@ class FlowQueues
         clearTimeout(to)
       
   work: () ->
-    console.log "start working"
     if @working == true
       log "Warning: Already working"
       return
-
+    
     @working = true
     for name, taskDescription of @taskDescriptions
       do (name, taskDescription) =>
