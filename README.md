@@ -19,7 +19,7 @@ TODO
 
 (The MIT License)
 
-Copyright (c) 2014 Applidget &lt;romain.pechayre@applidget.com&gt;
+Copyright (c) 2014 Applidget SAS &lt;romain.pechayre@applidget.com&gt;
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the
