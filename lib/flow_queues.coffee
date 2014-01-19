@@ -113,8 +113,6 @@ class FlowQueues
       cbs(length)
 
   isWorkerAvailableForTaskName:(taskName, previouslyRemaining, cbs) ->
-    if previouslyRemaining > 0
-      cbs(true, previouslyRemaining)
     if @isTaskNameLocked(taskName) == true
       cbs(false, 0)
       return      
@@ -153,7 +151,7 @@ class FlowQueues
     @lockTaskName(taskName)
     data = @encode(cbs)
     key = @workingSetNameForTaskName(taskName)
-    @dataSource.lrem key, 0, data, (err, _) =>
+    @dataSource.lrem key, 1, data, (err, _) =>
       @unlockTaskName(taskName)
       if cbs?
         cbs(err)
@@ -184,26 +182,24 @@ class FlowQueues
     @lockTaskName(taskDescription.name)
     @registerJobInProgress job, taskDescription.name, (err) =>      
       @unlockTaskName(taskDescription.name)
-      #TODO: next tick
-      #Redis has taken over on the lock ...
-      next()
-      TaskPerformer.performTask @jobsDir(), taskDescription, job, (status) =>
-        @scheduleBackendRequest (done) =>
-          @unregisterJobInProgress job, taskDescription.name, (err) =>
-            done()
-            @nbWorkingTasksByName[taskDescription.name] -= 1
-            nextTaskNameDescription = taskDescription.getNextTaskDescription(status)
-            log "Done #{taskDescription.name}!"
-            if !nextTaskNameDescription?
-              callback()
-            else
-              @enqueueForTask nextTaskNameDescription.name, job, queue, () =>
-                @processTaskForName nextTaskNameDescription.name
+      process.nextTick () =>
+        TaskPerformer.performTask @jobsDir(), taskDescription, job, (status) =>
+          @scheduleBackendRequest (done) =>
+            @unregisterJobInProgress job, taskDescription.name, (err) =>
+              done()
+              @nbWorkingTasksByName[taskDescription.name] -= 1
+              nextTaskNameDescription = taskDescription.getNextTaskDescription(status)
+              log "Done #{taskDescription.name}!"
+              if !nextTaskNameDescription?
                 callback()
-  
-  processTaskForName: (taskName, previouslyRemaining = 0) ->
+              else
+                @enqueueForTask nextTaskNameDescription.name, job, queue, () =>
+                  #TODO: try swaping the two lines. Depth First vs Breadth First execution
+                  @processTaskForName nextTaskNameDescription.name
+                  callback()
+      next()
+  processTaskForName: (taskName, previouslyRemaining = 0) ->   
     @scheduleBackendRequest (next) =>
-      log "Process"
       #Why Are we here ? 
       #1. Timeout fired
       #2. Task Completed
@@ -222,7 +218,6 @@ class FlowQueues
       #TODO: handle this in a smarter way
       @isWorkerAvailableForTaskName taskName, previouslyRemaining, (isAvailable, howMany) =>
         if !isAvailable
-          #log "!!!!!!!!!!!!! Task #{taskName}  locked !"
           #schedulePolling(taskName)
           next()
           return
@@ -231,7 +226,7 @@ class FlowQueues
         @reserveJob taskName, (foundJob, queue) =>
           #TODO the issue here is that the number of remaining slots is no longer true
           if foundJob?
-            log "Got #{taskName} (#{howMany})"
+            log "Got #{taskName} #{util.inspect foundJob}"
             #will be unlocked later (after being registered)
             if howMany > 1
               leCallback(howMany - 1)
@@ -244,15 +239,19 @@ class FlowQueues
     for key, to in @timeOuts
       do (key, to) ->
         clearTimeout(to)
+        
+  unregisterWorkingJobsForTask: (taskName, cbs) ->
+    @dataSource.del @workingSetNameForTaskName(taskName), (err, _) ->
+      cbs()
       
   work: () ->
     if @working == true
       log "Warning: Already working"
       return
-    
     @working = true
     for name, taskDescription of @taskDescriptions
       do (name, taskDescription) =>
-        @processTaskForName(name)
+        @unregisterWorkingJobsForTask name, () =>
+          @processTaskForName(name)
 
 exports.FlowQueues = FlowQueues
