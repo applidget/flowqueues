@@ -1,5 +1,6 @@
 log = require("util").log
 TaskPerformer = require("./task_performer").TaskPerformer
+Sequencer = require("./sequencer").Sequencer
 util = require("util")
 async = require "async"
 os = require "os"
@@ -13,26 +14,11 @@ class FlowQueues
     @timeOuts = {}
     @queues = ["fourth", "fifth", "critical", "main", "low"]
     #TODO: handle this the redis way
-    
-    @backendRequestBusy = false
-    @backendRequestsQueue = []
+    @sequencer = new Sequencer()
     
   addTaskDescription: (taskDesc) ->
     @taskDescriptions[taskDesc.name] = taskDesc
 
-  scheduleBackendRequest: (request) ->
-    @backendRequestsQueue.push request
-    if @backendRequestBusy == false
-      @processBackendRequest()
-
-  processBackendRequest:() ->
-    if @backendRequestsQueue.length == 0
-      return
-    request = @backendRequestsQueue.shift()
-    @backendRequestBusy = true
-    request () =>
-      @backendRequestBusy = false
-      @processBackendRequest()
   
   hostname:() ->
     return os.hostname()
@@ -149,7 +135,7 @@ class FlowQueues
     @registerJobInProgress job, taskDescription.name, (err) =>      
       process.nextTick () =>
         TaskPerformer.performTask @jobsDir(), taskDescription, job, (status) =>
-          @scheduleBackendRequest (done) =>
+          @sequencer.scheduleInvocation (done) =>
             @unregisterJobInProgress job, taskDescription.name, (err) =>
               done()
               nextTaskNameDescription = taskDescription.getNextTaskDescription(status)
@@ -163,7 +149,7 @@ class FlowQueues
                   callback()
       next()
   processTaskForName: (taskName, previouslyRemaining = 0) ->   
-    @scheduleBackendRequest (next) =>
+    @sequencer.scheduleInvocation (next) =>
       #Why Are we here ? 
       #1. Timeout fired
       #2. Task Completed
