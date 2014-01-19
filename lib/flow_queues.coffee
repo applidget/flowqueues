@@ -12,14 +12,13 @@ class FlowQueues
     @working = false
     @timeoutInterval ||= 5000
     @timeOuts = {}
-    @queues = ["fourth", "fifth", "critical", "main", "low"]
+    @queues = ["critical", "main", "low"]
     #TODO: handle this the redis way
     @sequencer = new Sequencer()
     
   addTaskDescription: (taskDesc) ->
     @taskDescriptions[taskDesc.name] = taskDesc
-
-  
+    
   hostname:() ->
     return os.hostname()
 
@@ -148,11 +147,9 @@ class FlowQueues
                   @processTaskForName nextTaskNameDescription.name
                   callback()
       next()
+      
   processTaskForName: (taskName, previouslyRemaining = 0) ->   
     @sequencer.scheduleInvocation (next) =>
-      #Why Are we here ? 
-      #1. Timeout fired
-      #2. Task Completed
       if @timeOuts[taskName]? 
         clearTimeout(@timeOuts[taskName])
         @timeOuts[taskName] = null
