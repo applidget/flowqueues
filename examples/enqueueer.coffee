@@ -6,7 +6,7 @@ worker = FlowQueues.createWorker(redis)
 # worker.overridenJobDir = "#{process.cwd()}/../tests/samples"
 
 firstTaskDesc = new TaskDescription("basic_task")
-secondTaskDesc = new TaskDescription("basic_task2", {}, 10)
+secondTaskDesc = new TaskDescription("basic_task2", {}, 200)
 
 firstTaskDesc.setNextTaskDescription("success", secondTaskDesc)
 

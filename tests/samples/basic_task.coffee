@@ -1,5 +1,6 @@
 log = require("util").log
 exports.run = (jobData) ->
-  log "Executing basic job"
+  console.log "Executing basic job"
+  jobData.modifiedBy = "basic_task youhou !!!!"
   @register("success")
     
