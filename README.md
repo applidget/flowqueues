@@ -11,10 +11,24 @@ Flowqueues is library providing queue based processing for node.js. It is develo
 
 ##Installation
 
-Flowqueues in currently under heavy development, so you may just use it by cloning this repo and running the examples in the examples
+Flowqueues in currently under **development**, so it is not yet distributed in npm. See next section to try it out. 
 
-##Simple example
-TODO
+
+##Want to try it ?
+A basic example with 2 different processes is included. This show that you don't have to enqueue and process the jobs in the same node.js process:
+
+  - Install node.js and coffee-script
+  - clone this project
+  - Go to /examples
+  - (First process) launch the example worker: `coffee basic_worker.coffee`
+  - (Second process) Go to another window and launch the enqueuer process: `coffee enqueuer.coffee`
+
+##Next steps (TODOs)
+
+  - Make a config class are a config parser to be able to load the same config from different files and DRY
+  - Release in npm 
+  - Timeout feature: possibility to *kill* a task if it takes too much time
+
 ## License 
 
 (The MIT License)
