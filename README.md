@@ -23,9 +23,9 @@ A basic example with 2 different processes is included. This show that you don't
   - (First process) launch the example worker: `coffee basic_worker.coffee`
   - (Second process) Go to another window and launch the enqueuer process: `coffee enqueuer.coffee`
 
-##Next steps (TODOs)
+##Next steps
 
-  - Make a config class are a config parser to be able to load the same config from different files and DRY
+  - Make a config class or a config parser to be able to load the same config from different files and DRY
   - Release in npm 
   - Timeout feature: possibility to *kill* a task if it takes too much time
 
