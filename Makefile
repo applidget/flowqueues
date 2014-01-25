@@ -12,9 +12,12 @@ generate-js:
 	@find src -name '*.coffee' | xargs coffee -c -o lib
 	@cp src/*.js lib
 
-remove-js:
+clean:
 	@rm -fr lib/
 
+publish: generate-js
+	@npm publish
+	
 deps:
 
 .PHONY: all

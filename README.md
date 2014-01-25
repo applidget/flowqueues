@@ -11,7 +11,7 @@ Flowqueues is library providing queue based processing for node.js. It is develo
 
 ##Installation
 
-Flowqueues in currently under **development**, so it is not yet distributed in npm. See next section to try it out. 
+    npm install flowqueues
 
 
 ##Want to try it ?
