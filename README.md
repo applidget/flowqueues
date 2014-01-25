@@ -2,20 +2,18 @@
 
 Flowqueues is library providing queue based processing for node.js. It is developped using Coffee Script but is distributed as a regular javascript package. It is Coffee Script aware though since it can load and run jobs written in Coffee Script.
 
-##Features
-
-- Written in Coffee Script
-- Backed by redis
-- Jobs are defined as sequence of tasks (Flow based programming) by the application
-- Support accurate concurrency tuning for each task
-
 ##Installation
 
     npm install flowqueues
     
 [![NPM](https://nodei.co/npm/flowqueues.png?downloads=true&stars=true)](https://nodei.co/npm/flowqueues/)
     
+##Features
 
+- Written in Coffee Script
+- Backed by redis
+- Jobs are defined as sequence of tasks (Flow based programming) by the application
+- Support accurate concurrency tuning for each task
 
 ##Basic usage
 A basic example with 2 different processes is included. This show that you don't have to enqueue and process the jobs in the same node.js process
