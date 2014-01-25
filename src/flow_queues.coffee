@@ -77,12 +77,15 @@ class FlowQueues
   baseKeyName: ->
     return "flowqueues"
   
-  #TODO: at least the first queue in the workflow must be hostname independant 
-  baseQueueNameForTask:(taskName) ->
-    return "#{@baseKeyName()}:#{@hostname()}:#{taskName}"
+  baseQueueNameForTask:(taskName, ignoreHost = false) ->
+    interFix = "#{@hostname()}:"
+    if ignoreHost == true
+      interFix = ""
+    return "#{@baseKeyName()}:#{interFix}#{taskName}"
           
   pendingQueueNameForTaskName: (taskName, queue) ->
-    return "#{@baseQueueNameForTask(taskName)}:#{queue}:pending"
+    ignoreHostName = (taskName == @firstTaskName)
+    return "#{@baseQueueNameForTask(taskName, ignoreHostName)}:#{queue}:pending"
 
   workingSetNameForTaskName:(taskName) ->
     return "#{@baseQueueNameForTask(taskName)}:working"

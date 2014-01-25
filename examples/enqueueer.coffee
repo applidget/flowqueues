@@ -1,5 +1,5 @@
-FlowQueues = require("../lib/flow_queues").FlowQueues
-TaskDescription = require("../lib/task_description").TaskDescription
+FlowQueues = require("../src/flow_queues").FlowQueues
+TaskDescription = require("../src/task_description").TaskDescription
 redis = require("redis").createClient()
 
 worker = FlowQueues.createWorker(redis)
