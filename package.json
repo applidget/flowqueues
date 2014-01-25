@@ -2,20 +2,28 @@
   "name": "flowqueues",
   "version": "0.0.1",
   "description": "Node.js queuing system using capacity constraints",
-  "main": "index.js",
+  "main": "lib/flow_queues.js",
   "directories": {
     "test": "tests"
   },
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/applidget/flowqueues.git"
   },
-  "repository": "",
+  "scripts": {
+    "test": "make test"
+  },
+  "engines": {
+    "node": ">= 0.10.0"
+  },
   "keywords": [
     "queues",
-    "redis"
+    "redis",
+    "worker"
   ],
   "dependencies": [
     "redis",
+    "hiredis",
     "coffee-script",
     "mocha",
     "async"
