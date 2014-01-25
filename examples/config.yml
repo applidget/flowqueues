@@ -1,0 +1,11 @@
+flowqueue_graph:
+  jobs_dir: "../tests/samples"
+  first_task: basic_task
+  tasks:
+    - name: basic_task
+      concurrency: 10
+      next:
+        success: basic_task2
+
+    - name: basic_task2
+      concurrency: 100

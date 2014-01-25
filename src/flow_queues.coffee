@@ -22,7 +22,7 @@ class FlowQueues
   hostname:() ->
     return os.hostname()
 
-  setFirstTaskDescription: (fistTaskName) ->
+  setFirstTaskName: (fistTaskName) ->
     @firstTaskName = fistTaskName
     
   @createWorker: (dataSource)  =>
@@ -98,9 +98,9 @@ class FlowQueues
     @workingCountForTaskName taskName, (count) =>
       taskDescription = @taskDescriptions[taskName]
       status = false
-      if count < taskDescription.maxParallelInstances
+      if count < taskDescription.concurrency
         status = true
-      cbs(status, taskDescription.maxParallelInstances - count)
+      cbs(status, taskDescription.concurrency - count)
     
   enqueueForTask:(taskName, job, queue, cbs = null) ->
     encodedJob = @encode(job)
@@ -110,7 +110,7 @@ class FlowQueues
   
   enqueue:(job, cbs = null) ->
     queue = "main"
-    if  @queues.length > 0 
+    if  @queues.length > 0
       queue = @queues[0]
     @enqueueTo job, queue, cbs
     
@@ -134,31 +134,31 @@ class FlowQueues
   performTaskOnJob: (job, taskDescription, queue, next,  callback) ->
     #TODO: check if task is modified here. It should be !
     #TODO: register task as running in redis here
-    @registerJobInProgress job, taskDescription.name, (err) =>      
+    @registerJobInProgress job, taskDescription.name, (err) =>
       process.nextTick () =>
         TaskPerformer.performTask @jobsDir(), taskDescription, job, (status) =>
           @sequencer.scheduleInvocation (done) =>
             @unregisterJobInProgress job, taskDescription.name, (err) =>
               done()
-              nextTaskNameDescription = taskDescription.getNextTaskDescription(status)
+              nextTaskName = taskDescription.getNextTaskNameForKey(status)
               log "Done #{taskDescription.name}!"
-              if !nextTaskNameDescription?
+              if !nextTaskName?
                 callback()
               else
-                @enqueueForTask nextTaskNameDescription.name, job, queue, () =>
+                @enqueueForTask nextTaskName, job, queue, () =>
                   #TODO: try swaping the two lines. Depth First vs Breadth First execution
-                  @processTaskForName nextTaskNameDescription.name
+                  @processTaskForName nextTaskName
                   callback()
       next()
       
-  processTaskForName: (taskName, previouslyRemaining = 0) ->   
+  processTaskForName: (taskName, previouslyRemaining = 0) ->
     @sequencer.scheduleInvocation (next) =>
-      if @timeOuts[taskName]? 
+      if @timeOuts[taskName]?
         clearTimeout(@timeOuts[taskName])
         @timeOuts[taskName] = null
 
       leCallback = (nowRemaining = 0) =>
-        @processTaskForName(taskName, nowRemaining)    
+        @processTaskForName(taskName, nowRemaining)
     
       schedulePolling =  () =>
         if taskName == @firstTaskName
@@ -168,6 +168,7 @@ class FlowQueues
         if !isAvailable
           next()
           return
+
         taskDescription = @taskDescriptions[taskName]
         @reserveJob taskName, (foundJob, queue) =>
           if foundJob?
@@ -175,7 +176,7 @@ class FlowQueues
             if howMany > 1
               leCallback(howMany - 1)
             @performTaskOnJob(foundJob, taskDescription, queue, next, leCallback)
-          else
+          else            
             next()
             schedulePolling()
     
@@ -189,6 +190,7 @@ class FlowQueues
       cbs()
       
   work: () ->
+
     if @working == true
       log "Warning: Already working"
       return

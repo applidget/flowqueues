@@ -26,7 +26,8 @@
     "hiredis",
     "coffee-script",
     "mocha",
-    "async"
+    "async",
+    "js-yaml"
   ],
   "author": "Romain Pechayre <romain.pechayre@applidget.com>",
   "license": "MIT"

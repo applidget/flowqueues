@@ -8,12 +8,12 @@ describe "Basic FlowQueues Creation",  ->
   worker.overridenJobDir = "#{process.cwd()}/samples"
   firstTaskDesc = new TaskDescription("basic_task")
   secondTaskDesc = new TaskDescription("basic_task2")
-  firstTaskDesc.setNextTaskDescription("success", secondTaskDesc)
+  firstTaskDesc.setNextTaskNameForKey("success", secondTaskDesc)
   
   worker.addTaskDescription(firstTaskDesc)
   worker.addTaskDescription(secondTaskDesc)
   
-  worker.setFirstTaskDescription(firstTaskDesc.name)
+  worker.setFirstTaskName(firstTaskDesc.name)
   it "should now have 2 task descriptions", () ->
     assert.equal(2, Object.keys(worker.taskDescriptions).length)
   # it "should run 2 seconds", (done) ->

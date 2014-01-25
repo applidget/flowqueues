@@ -1,19 +1,10 @@
-FlowQueues = require("../lib/flow_queues").FlowQueues
-TaskDescription = require("../lib/task_description").TaskDescription
+FlowQueues = require("../src/flow_queues").FlowQueues
+ConfigLoader  = require("../src/config_loader").ConfigLoader
 redis = require("redis").createClient()
 
 worker = FlowQueues.createWorker(redis)
-worker.overridenJobDir = "#{process.cwd()}/../tests/samples"
-
-firstTaskDesc = new TaskDescription("basic_task")
-secondTaskDesc = new TaskDescription("basic_task2", {}, 200)
-
-firstTaskDesc.setNextTaskDescription("success", secondTaskDesc)
-
-worker.addTaskDescription(firstTaskDesc)
-worker.addTaskDescription(secondTaskDesc)
-
-worker.setFirstTaskDescription(firstTaskDesc.name)
+configLoader = new ConfigLoader(worker)
+configLoader.load "./config.yml" 
 
 worker.work()
 
