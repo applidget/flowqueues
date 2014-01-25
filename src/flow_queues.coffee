@@ -70,8 +70,8 @@ class FlowQueues
   jobsDir:() ->
     return @overridenJobDir || process.cwd()
 
-  pendingTasksCount: (taskName, cbs) ->
-    @dataSource.llen @pendingQueueNameForTaskName(taskName), (err, res) =>
+  pendingTasksCount: (taskName, queue, cbs) ->
+    @dataSource.llen @pendingQueueNameForTaskName(taskName, queue), (err, res) =>
       cbs(res)
 
   baseKeyName: ->
@@ -172,6 +172,7 @@ class FlowQueues
         taskDescription = @taskDescriptions[taskName]
         @reserveJob taskName, (foundJob, queue) =>
           if foundJob?
+            #TODO: add verbosity option to be able to silence this
             log "Got #{taskName} #{util.inspect foundJob}"
             if howMany > 1
               leCallback(howMany - 1)

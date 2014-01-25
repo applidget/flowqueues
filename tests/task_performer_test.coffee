@@ -7,6 +7,6 @@ assert = require("assert")
 describe "TaskPerformer testing",  ->
   basicTaskDesc = new TaskDescription("basic_task")
   it "should perform a basic task", (done) ->
-    taskPerformer = TaskPerformer.performTask "#{process.cwd()}/samples", basicTaskDesc , {arg1: "arg1"}, (status) ->
+    taskPerformer = TaskPerformer.performTask "#{process.cwd()}/tests/samples", basicTaskDesc , {arg1: "arg1"}, (status) ->
       done()
     

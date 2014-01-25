@@ -5,7 +5,7 @@ assert = require("assert")
 
 describe "Basic FlowQueues Creation",  ->
   worker = FlowQueues.createWorker(redis)
-  worker.overridenJobDir = "#{process.cwd()}/samples"
+  worker.overridenJobDir = "#{process.cwd()}/tests/samples"
   firstTaskDesc = new TaskDescription("basic_task")
   secondTaskDesc = new TaskDescription("basic_task2")
   firstTaskDesc.setNextTaskNameForKey("success", secondTaskDesc)
@@ -26,8 +26,8 @@ describe "Basic FlowQueues Creation",  ->
   it "should have 1 job pending", (done) ->
     payload = {first: "First", second: "Second arg", other_arg: "Other arg"}
     #Let's assume we use the class for enqueuing and working ...
-    worker.enqueue payload, () ->
-      worker.pendingTasksCount firstTaskDesc.name, (count) ->
+    worker.enqueueTo payload, "main", () ->
+      worker.pendingTasksCount firstTaskDesc.name, "main", (count) ->
         assert.equal(1, count)
         done()
     

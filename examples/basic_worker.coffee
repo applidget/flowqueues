@@ -4,7 +4,7 @@ redis = require("redis").createClient()
 
 worker = FlowQueues.createWorker(redis)
 configLoader = new ConfigLoader(worker)
-configLoader.load "./config.yml" 
+configLoader.load "../tests/samples/config.yml" 
 
 worker.work()
 
