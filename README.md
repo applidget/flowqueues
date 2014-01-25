@@ -20,7 +20,6 @@ A basic example with 2 different processes is included. This show that you don't
     
 ##Next steps (upcoming features)
 
-  - Make a config class or a config parser to be able to load the same config from different files and DRY
   - Timeout feature: possibility to *kill* a task if it takes too much time
   - Web UI
   - use node.js cluster module to be crash safe like Resque does
