@@ -1,4 +1,4 @@
-Sequencer = require("../lib/sequencer").Sequencer
+Sequencer = require("../src/sequencer").Sequencer
 assert = require("assert")
 
 describe "Sequencer testing", ->

@@ -1,6 +1,6 @@
-FlowQueues = require("../lib/flow_queues").FlowQueues
+FlowQueues = require("../src/flow_queues").FlowQueues
 redis = require("redis").createClient()
-TaskDescription = require("../lib/task_description").TaskDescription
+TaskDescription = require("../src/task_description").TaskDescription
 assert = require("assert")
 
 describe "Basic FlowQueues Creation",  ->

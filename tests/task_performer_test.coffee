@@ -1,6 +1,6 @@
-TaskDescription = require("../lib/task_description").TaskDescription
-TaskPerformer = require("../lib/task_performer").TaskPerformer
-FlowQueues = require("../lib/flow_queues").FlowQueues
+TaskDescription = require("../src/task_description").TaskDescription
+TaskPerformer = require("../src/task_performer").TaskPerformer
+FlowQueues = require("../src/flow_queues").FlowQueues
 
 assert = require("assert")
 
