@@ -12,7 +12,7 @@ Flowqueues is library providing queue based processing for node.js. It is develo
 
 - Written in Coffee Script
 - Backed by redis
-- Jobs are defined as sequence of tasks (Flow based programming) by the application
+- Jobs are defined as trees of tasks ([Flow based programming](http://en.wikipedia.org/wiki/Flow-based_programming)) by the application
 - Support accurate concurrency tuning for each task
 
 ##Basic usage
