@@ -59,7 +59,7 @@ Here is how to create a worker. It can be loaded on different process than the e
 
 In addition to that, flowqueues will provide a binary allowing you to launch it using a single command line like this:
     
-    $ flowqueues work -c ../tests/samples/config.yml
+    $flowqueues work -c ../tests/samples/config.yml
 
 To load the web frontend from a sinatra app, assuming it already exists (as `app` local variable):
 
