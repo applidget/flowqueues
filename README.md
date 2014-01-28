@@ -38,24 +38,24 @@ First require `flowqueues` and `redis` and create a redisClient as you usually d
 
 Create an enqueuer like so (**NB**: the config should describe all available types of jobs, which is not the case at this moment) and enqueue some job:
 
-    var enqueuer = flowqueues.createEnqueuer(redisClient, "../tests/samples/config.yml");
+    var flowqueuesClient = flowqueues.createClient(redisClient, "../tests/samples/config.yml");
     var jobData = {arg1: "arg1", arg2: "arg2"};
     
     // As simple as 
-    enqueuer.enqueue("JobType1", jobData); //Which will enqueue to default queue (described in config maybe)
+    flowqueuesClient.enqueue("JobType1", jobData); //Which will enqueue to default queue (described in config maybe)
 
     //Or
-    enqueuer.enqueueTo("JobType1", jobData, "critical"); //overrides queue described in config
+    flowqueuesClient.enqueueTo("JobType1", jobData, "critical"); //overrides queue described in config
 
     //Or
-    enqueuer.enqueueTo("JobType1", jobData, "critical", function(err){
+    flowqueuesClient.enqueueTo("JobType1", jobData, "critical", function(err){
       //enqueuing is async and we may want to wait
     });
 
 Here is how to create a worker. It can be loaded on different process than the enqueuer. The only think that matters is the configuration:
     
-    var worker = flowqueues.createWorker(redisClient, "../tests/samples/config.yml")
-    worker.work
+    var worker = flowqueues.createWorker(redisClient, "../tests/samples/config.yml");
+    worker.work();
 
 In addition to that, flowqueues will provide a binary allowing you to launch it using a single command line like this:
     
