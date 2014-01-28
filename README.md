@@ -20,9 +20,51 @@ A basic example with 2 different processes is included. This show that you don't
     
 ##Next steps (upcoming features)
 
+  - Handle different kinds of jobs: if you want to handle different kinds of jobs, the only option available is to create multiple workers. 
   - Timeout feature: possibility to *kill* a task if it takes too much time
   - Web UI
   - use node.js cluster module to be crash safe like Resque does
+
+##Target API
+
+**NB: THIS DOES NOT WORK YET AND IS ONLY A SPECIFICATION OF HOW FLOWQUEUES WILL BE USED IN THE FUTURE**
+
+First require `flowqueues` and `redis` and create a redisClient as you usually do:
+
+    var flowqueues = require('flowqueues')
+    var redis = require("redis")
+    var redisClient = redis.createClient()
+    
+
+Create an enqueuer like so (**NB**: the config should describe all available types of jobs, which is not the case at this moment) and enqueue some job:
+
+    var enqueuer = flowqueues.createEnqueuer(redisClient, "../tests/samples/config.yml");
+    var jobData = {arg1: "arg1", arg2: "arg2"};
+    
+    // As simple as 
+    enqueuer.enqueue("JobType1", jobData); //Which will enqueue to default queue (described in config maybe)
+
+    //Or
+    enqueuer.enqueueTo("JobType1", jobData, "critical"); //overrides queue described in config
+
+    //Or
+    enqueuer.enqueueTo("JobType1", jobData, "critical", function(err){
+      //enqueuing is async and we may want to wait
+    });
+
+Here is how to create a worker. It can be loaded on different process than the enqueuer. The only think that matters is the configuration:
+    
+    var worker = flowqueues.createWorker(redisClient, "../tests/samples/config.yml")
+    worker.work
+
+In addition to that, flowqueues will provide a binary allowing you to launch it using a single command line like this:
+    
+    $ flowqueues work -c ../tests/samples/config.yml
+
+To load the web frontend from a sinatra app, assuming it already exists (as `app` local variable):
+
+    var flowQueuesUI = flowqueues.createWebApp(redisClient, "../tests/samples/config.yml")
+    app.use("/flowqueues", flowQueuesUI);
 
 ## License 
 
