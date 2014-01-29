@@ -10,13 +10,15 @@ Queue = require("./queue").Queue
 helpers = require("./helpers")
 async = require "async"
 log = require("util").log
+util = require("util")
 
 class Worker
 
-  constructor: (@config) ->
+  constructor: (@client) ->
+    @config = @client.config
+    @dataSource = @config.dataSource
     @working = false
     @sequencer = new Sequencer()
-    @dataSource = @config.dataSource
     @timeOuts = {}
 
   work: () ->
@@ -94,7 +96,7 @@ class Worker
               if !nextTaskName?
                 callback()
               else
-                @enqueueForTask nextTaskName, job, queue, () =>
+                @client.enqueueForTask nextTaskName, job, queue, () =>
                   #TODO: try swaping the two lines. Depth First vs Breadth First execution
                   @processTaskForName nextTaskName
                   callback()

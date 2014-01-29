@@ -35,8 +35,8 @@ createConfig = (dataSource, configPath) ->
   return config
   
 createWorker = (dataSource, configPath)  ->
-  config = createConfig(dataSource, configPath)
-  return new Worker(config)
+  client = createClient(dataSource, configPath)
+  return new Worker(client)
 
 createClient = (dataSource, configPath) ->
   config = createConfig(dataSource, configPath)

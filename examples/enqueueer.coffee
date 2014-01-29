@@ -9,7 +9,7 @@ redis = require("redis").createClient()
 
 enqueuer = flowqueues.createClient(redis, "../tests/samples/config.yml")
 
-for i in [1..3]
+for i in [1..3000]
   job = {arg1: "arg1", arg2: "arg22"}
   enqueuer.enqueueTo(job, "low")
   
