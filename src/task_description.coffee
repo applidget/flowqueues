@@ -1,3 +1,9 @@
+###
+Flowqueues - Queue based programming for node.js
+(c) Copyright 2014 Applidget SAS
+Released under the MIT License
+###
+
 class TaskDescription
 
   constructor: (@name, @nextDictionary = {}, @concurrency = 1, @timeout = null) -> {}

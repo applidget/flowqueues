@@ -5,12 +5,11 @@ PATH := ${NPM_EXECUTABLE_HOME}:${PATH}
 test: deps
 	@find tests -name '*_test.coffee' | xargs -n 1 -t mocha --compilers coffee:coffee-script
 
-dev: generate-js
+dev: lib
 	@coffee -wc --bare -o lib src/*.coffee
 
-generate-js: license
+lib: license
 	@find src -name '*.coffee' | xargs coffee -c -o lib
-	@cp src/*.js lib
 
 license:
 	@bash inject_license.sh
@@ -23,5 +22,5 @@ publish: generate-js
 	
 deps:
 
-.PHONY: all generate-js license clean publish
+.PHONY: all lib license clean publish
 

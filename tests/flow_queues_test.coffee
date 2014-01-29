@@ -1,3 +1,9 @@
+###
+Flowqueues - Queue based programming for node.js
+(c) Copyright 2014 Applidget SAS
+Released under the MIT License
+###
+
 FlowQueues = require("../src/flow_queues").FlowQueues
 redis = require("redis").createClient()
 TaskDescription = require("../src/task_description").TaskDescription

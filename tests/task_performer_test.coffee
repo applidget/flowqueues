@@ -1,3 +1,9 @@
+###
+Flowqueues - Queue based programming for node.js
+(c) Copyright 2014 Applidget SAS
+Released under the MIT License
+###
+
 TaskDescription = require("../src/task_description").TaskDescription
 TaskPerformer = require("../src/task_performer").TaskPerformer
 FlowQueues = require("../src/flow_queues").FlowQueues
