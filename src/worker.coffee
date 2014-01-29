@@ -48,15 +48,15 @@ class Worker
         @processTaskForName(taskName, nowRemaining)
     
       schedulePolling =  () =>
-        if taskName == @firstTaskName
-          @timeOuts[taskName] = setTimeout(leCallback, @timeoutInterval)
+        if taskName == @config.firstTaskName
+          @timeOuts[taskName] = setTimeout(leCallback, @config.timeoutInterval)
         
       @isWorkerAvailableForTaskName taskName, previouslyRemaining, (isAvailable, howMany) =>
         if !isAvailable
           next()
           return
 
-        taskDescription = @taskDescriptions[taskName]
+        taskDescription = @config.taskDescriptions[taskName]
         @reserveJob taskName, (foundJob, queue) =>
           if foundJob?
             #TODO: add verbosity option to be able to silence this
@@ -69,7 +69,7 @@ class Worker
             schedulePolling()
   
   isWorkerAvailableForTaskName:(taskName, previouslyRemaining, cbs) ->
-    Queue.workingCountForTaskName taskName, (count) =>
+    @workingCountForTaskName taskName, (count) =>
       taskDescription = @config.taskDescriptions[taskName]
       status = false
       if count < taskDescription.concurrency
@@ -129,7 +129,7 @@ class Worker
 
     #Happens when job has been found or all queues are empty
     finalStep = (err) =>
-      foundJobCbs(foundJob, @queues[queueIndex])
+      foundJobCbs(foundJob, @config.queues[queueIndex])
     
     block = (cbs) =>
       @reserveJobOnQueue taskName, @config.queues[queueIndex], (job) =>
@@ -143,4 +143,4 @@ class Worker
   
       
 
-export.Worker = Worker
+exports.Worker = Worker
