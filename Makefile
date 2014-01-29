@@ -17,7 +17,7 @@ license:
 clean:
 	@rm -fr lib/
 
-publish: generate-js
+publish: lib
 	@npm publish
 	
 deps:
