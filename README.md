@@ -3,11 +3,12 @@
 Flowqueues is library providing queue based processing for node.js. It is developped using CoffeeScript but is distributed through npm as a regular node.js package through. It is CoffeeScript aware though since it can load and run jobs written in CoffeeScript.
 
 ##Installation
+[![NPM](https://nodei.co/npm/flowqueues.png?downloads=true&stars=true)](https://nodei.co/npm/flowqueues/)
 
     npm install flowqueues
     
 
-[![NPM](https://nodei.co/npm/flowqueues.png?downloads=true&stars=true)](https://nodei.co/npm/flowqueues/)    
+
 ##Features
 
 - Written in [CoffeeScript](http://coffeescript.org/)
