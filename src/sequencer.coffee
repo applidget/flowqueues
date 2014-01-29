@@ -1,3 +1,9 @@
+###
+Flowqueues - Queue based programming for node.js
+(c) Copyright 2014 Applidget SAS
+Released under the MIT License
+###
+
 #Helper class to gracefully handle blocks of code in sequence
 #Usefull to make sure a number of async calls are made in sequence
 #and nothing similar is called in between
