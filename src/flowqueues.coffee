@@ -7,6 +7,7 @@ Released under the MIT License
 ConfigLoader = require("./config_loader").ConfigLoader
 Config = require("./config").Config
 Worker = require("./worker").Worker
+Client = require("./client").Client
 
 # class FlowQueues
 #   constructor: (@dataSource) ->
@@ -215,3 +216,4 @@ createClient = (dataSource, configPath) ->
   #         @processTaskForName(name)
 
 exports.createWorker = createWorker
+exports.createClient = createClient
