@@ -4,14 +4,10 @@ Flowqueues - Queue based programming for node.js
 Released under the MIT License
 ###
 
-FlowQueues = require("../src/flow_queues").FlowQueues
-ConfigLoader  = require("../src/config_loader").ConfigLoader
+flowqueues = require("../src/flowqueues")
 redis = require("redis").createClient()
 
-worker = FlowQueues.createWorker(redis)
-configLoader = new ConfigLoader(worker)
-configLoader.load "../tests/samples/config.yml" 
-
+worker = flowqueues.createWorker(redis, "../tests/samples/config.yml")
 worker.work()
 
 

@@ -10,18 +10,18 @@ fs   = require('fs')
 
 class ConfigLoader 
 
-  constructor: (@worker) ->
+  constructor: (@config) ->
     #
   load:(file) ->
     conf = yaml.safeLoad(fs.readFileSync(file, 'utf8')).flowqueue_graph
-    @worker.overridenJobDir = conf.jobs_dir if conf.jobs_dir
-    @worker.setFirstTaskName(conf.first_task)
+    @config.overridenJobDir = conf.jobs_dir if conf.jobs_dir
+    @config.setFirstTaskName(conf.first_task)
     for task in conf.tasks
       do (task) =>
         concurrency = task.concurrency || 1
         name = task.name #TODO: handle error if name empty
         next = task.next || {}
         taskDesc = new TaskDescription(name, next, concurrency)
-        @worker.addTaskDescription(taskDesc)
+        @config.addTaskDescription(taskDesc)
 
 exports.ConfigLoader = ConfigLoader
