@@ -8,10 +8,13 @@ test: deps
 dev: generate-js
 	@coffee -wc --bare -o lib src/*.coffee
 
-generate-js:
+generate-js: license
 	@find src -name '*.coffee' | xargs coffee -c -o lib
 	@cp src/*.js lib
 
+license:
+	@bash inject_license.sh
+	
 clean:
 	@rm -fr lib/
 
@@ -20,5 +23,5 @@ publish: generate-js
 	
 deps:
 
-.PHONY: all
+.PHONY: all generate-js license clean publish
 
