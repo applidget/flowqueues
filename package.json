@@ -21,14 +21,14 @@
     "redis",
     "worker"
   ],
-  "dependencies": [
-    "redis",
-    "hiredis",
-    "coffee-script",
-    "mocha",
-    "async",
-    "js-yaml"
-  ],
+  "dependencies": {
+    "redis": "0.10.x",
+    "hiredis": "0.1.x",
+    "coffee-script": "1.7.x",
+    "mocha": "1.16.x",
+    "async": "0.2.10",
+    "js-yaml": "3.0.x"
+  },
   "author": "Romain Pechayre <romain.pechayre@applidget.com>",
   "license": "MIT"
 }

@@ -3,7 +3,7 @@ NPM_EXECUTABLE_HOME := node_modules/.bin
 PATH := ${NPM_EXECUTABLE_HOME}:${PATH}
 
 test: deps
-	@find tests -name '*_test.coffee' | xargs -n 1 -t mocha --compilers coffee:coffee-script
+	@find tests -name '*_test.coffee' | xargs -n 1 -t mocha --compilers coffee:coffee-script 
 
 dev: lib
 	@coffee -wc --bare -o lib src/*.coffee
