@@ -17,6 +17,14 @@ decode = (json) ->
     #TODO: why is that ?
     log "PARSING ERROR: #{util.inspect(util.inspect(json))}"
   return res
+
+verbose = () ->
+  return vverbose() || process.env.VERBOSE == "true"
+  
+vverbose = () ->
+  return process.env.VVERBOSE == "true"
   
 exports.encode = encode
 exports.decode = decode
+exports.verbose = verbose
+exports.vverbose = vverbose

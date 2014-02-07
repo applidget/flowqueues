@@ -47,6 +47,7 @@ class Worker
         @timeOuts[taskName] = null
 
       leCallback = (nowRemaining = 0) =>
+        log "*** Looking up #{taskName}" if helpers.vverbose()
         @processTaskForName(taskName, nowRemaining)
     
       schedulePolling =  () =>
@@ -61,8 +62,7 @@ class Worker
         taskDescription = @config.taskDescriptions[taskName]
         @reserveJob taskName, (foundJob, queue) =>
           if foundJob?
-            #TODO: add verbosity option to be able to silence this
-            log "Got #{taskName} #{util.inspect foundJob}"
+            log "Got #{taskName} #{util.inspect foundJob}" if helpers.verbose()
             if howMany > 1
               leCallback(howMany - 1)
             @performTaskOnJob(foundJob, taskDescription, queue, next, leCallback)
@@ -92,7 +92,7 @@ class Worker
             @unregisterJobInProgress job, taskDescription.name, (err) =>
               done()
               nextTaskName = taskDescription.getNextTaskNameForKey(status)
-              log "Done #{taskDescription.name}!"
+              log "Done #{taskDescription.name}!" if helpers.verbose()
               if !nextTaskName?
                 callback()
               else
