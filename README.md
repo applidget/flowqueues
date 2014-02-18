@@ -17,17 +17,6 @@ Flowqueues is library providing queue based processing for node.js. It is develo
 - Concurrency setting for each task
 
 ##Basic usage
-A basic example with 2 different processes is included. This show that you don't have to enqueue and process the jobs in the same node.js process
-    
-##Next steps (upcoming features)
-
-  - Handle different kinds of jobs: if you want to handle different kinds of jobs, the only option available is to create multiple workers. 
-  - Timeout feature: possibility to *kill* a task if it takes too much time
-  - Web UI
-  - use node.js cluster module to be crash safe like Resque does
-
-##Target API
-
 **NB: THIS DOES NOT WORK YET AND IS ONLY A SPECIFICATION OF HOW FLOWQUEUES WILL BE USED IN THE FUTURE**
 
 First require `flowqueues` and `redis` and create a redisClient as you usually do:
@@ -57,6 +46,16 @@ Here is how to create a worker. It can be loaded on different process than the e
     
     var worker = flowqueues.createWorker(redisClient, "../tests/samples/config.yml");
     worker.work();
+
+##Next steps (upcoming features)
+
+  - Handle different kinds of jobs: if you want to handle different kinds of jobs, the only option available is to create multiple workers. 
+  - Timeout feature: possibility to *kill* a task if it takes too much time
+  - Web UI
+  - use node.js cluster module to be crash safe like Resque does
+
+##Target API
+
 
 In addition to that, flowqueues will provide a binary allowing you to launch it using a single command line like this:
     
