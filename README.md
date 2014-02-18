@@ -17,7 +17,6 @@ Flowqueues is library providing queue based processing for node.js. It is develo
 - Concurrency setting for each task
 
 ##Basic usage
-**NB: THIS DOES NOT WORK YET AND IS ONLY A SPECIFICATION OF HOW FLOWQUEUES WILL BE USED IN THE FUTURE**
 
 First require `flowqueues` and `redis` and create a redisClient as you usually do:
 
