@@ -5,8 +5,8 @@ Released under the MIT License
 ###
 
 log = require("util").log
-exports.run = (jobData) ->
+exports.run = (jobData, cbs) ->
   console.log "Executing basic job"
   jobData.modifiedBy = "basic_task youhou !!!!"
-  @register("success")
+  cbs("success")
     

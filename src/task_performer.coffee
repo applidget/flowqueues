@@ -10,10 +10,8 @@ class TaskPerformer
     
   @performTask: (baseDir, taskDescription, jobData, cbs ) ->
     taskImplementation = require("#{process.cwd()}/#{baseDir}/#{taskDescription.name}").run
-    task = new Object()
-    task.impl = taskImplementation
-    task.register = (status) ->
+    taskCbs = (status) ->
       cbs(status)
-    task.impl(jobData)
+    taskImplementation(jobData, taskCbs)
     
 exports.TaskPerformer = TaskPerformer

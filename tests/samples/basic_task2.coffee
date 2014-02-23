@@ -6,11 +6,11 @@ Released under the MIT License
 
 log = require("util").log
 
-exports.run = (jobData) ->
+exports.run = (jobData, cbs) ->
   log "Executing basic job (Second kind)"
   log "Modified or not : #{jobData.modifiedBy}"
   cb = () =>
-    @register "success"
+    cbs "success"
   setTimeout cb, 2000
   
     
