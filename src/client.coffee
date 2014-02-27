@@ -29,7 +29,7 @@ class Client
     @enqueueForTask(taskDesc.name, job, queue, cbs)
   
   pendingTasksCount: (taskName, queue, cbs) ->
-    @dataSource.llen @pendingQueueNameForTaskName(taskName, queue), (err, res) =>
+    @dataSource.llen Queue.pendingQueueNameForTaskName(taskName, queue), (err, res) =>
       cbs(res)
   
   

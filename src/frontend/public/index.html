@@ -61,11 +61,13 @@
               <thead>
                 <tr>
                   <th>Name</th>
+                  <th>Pending tasks</th>
                 </tr>
               </thead>
               <tbody>
                 <tr ng-repeat="task in tasks">
-                  <td>{{ task }}</td>
+                  <td>{{ task.name }}</td>
+                  <td>{{ task.pending }}</td>
                 </tr>
               </tbody>
             </table>
