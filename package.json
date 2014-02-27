@@ -23,6 +23,8 @@
   ],
   "dependencies": {
     "redis": "0.10.x",
+    "underscore": "1.6.x",
+    "express": "3.4.x",
     "hiredis": "0.1.x",
     "coffee-script": "1.7.x",
     "mocha": "1.16.x",
