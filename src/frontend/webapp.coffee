@@ -25,12 +25,10 @@ class WebApp
       descriptions = []
       block = (key, cbs) =>
         count = @client.pendingTasksCount key, "main", (count) =>
-          console.log("Count for #{key} is #{count}")          
           descriptions.push {name: key, pending: count}
           cbs()
         
       async.each keys, block, (err) =>
-        console.log "Err is #{util.inspect(descriptions)}"
         body = JSON.stringify(descriptions)
         res.setHeader "Content-Type", "application/json"
         res.setHeader "Content-Length", Buffer.byteLength(body)
