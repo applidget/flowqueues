@@ -8,6 +8,7 @@ ConfigLoader = require("./config_loader").ConfigLoader
 Config = require("./config").Config
 Worker = require("./worker").Worker
 Client = require("./client").Client
+WebApp = require("./webapp").WebApp
 
 createConfig = (dataSource, configPath) ->
   config = new Config(dataSource) 
@@ -22,6 +23,11 @@ createWorker = (dataSource, configPath)  ->
 createClient = (dataSource, configPath) ->
   config = createConfig(dataSource, configPath)
   return new Client(config)
+  
+createWebApp = (dataSource, configPath) ->
+  client = createClient(dataSource, configPath)
+  return new WebApp(client).engine
 
 exports.createWorker = createWorker
 exports.createClient = createClient
+exports.createWebApp = createWebApp
