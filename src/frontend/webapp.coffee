@@ -8,11 +8,13 @@ express = require('express');
 
 class WebApp
 
-  constructor: () ->
+  constructor: (@client) ->
     @engine = express();
     @init()
 
   init: () ->
+    @engine.use(express.static("#{__dirname}/public"))
+    
     @engine.get "/dashboard", (req, res) ->
       body = "Hello World"
       res.setHeader "Content-Type", "text/plain"

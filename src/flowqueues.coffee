@@ -8,7 +8,7 @@ ConfigLoader = require("./config_loader").ConfigLoader
 Config = require("./config").Config
 Worker = require("./worker").Worker
 Client = require("./client").Client
-WebApp = require("./webapp").WebApp
+WebApp = require("./frontend/webapp").WebApp
 
 createConfig = (dataSource, configPath) ->
   config = new Config(dataSource) 
