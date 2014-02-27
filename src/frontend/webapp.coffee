@@ -24,9 +24,10 @@ class WebApp
       keys = _.keys(descriptions)
       descriptions = []
       block = (key, cbs) =>
-        count = @client.pendingTasksCount key, "main", (count) =>
-          descriptions.push {name: key, pending: count}
-          cbs()
+        @client.pendingTasksCount key, "main", (pending) =>
+          @client.workingTasksCount key, (working) =>
+            descriptions.push {name: key, pending: pending, working: working }
+            cbs()
         
       async.each keys, block, (err) =>
         body = JSON.stringify(descriptions)

@@ -31,7 +31,10 @@ class Client
   pendingTasksCount: (taskName, queue, cbs) ->
     @dataSource.llen Queue.pendingQueueNameForTaskName(taskName, queue), (err, res) =>
       cbs(res)
-  
+
+  workingTasksCount: (taskName, cbs) ->
+    @dataSource.llen Queue.workingSetNameForTaskName(taskName), (err, res) =>
+      cbs(res)
   
   
 exports.Client = Client
