@@ -45,6 +45,11 @@ Here is how to create a worker. It can be loaded on different process than the e
     
     var worker = flowqueues.createWorker(redisClient, "../tests/samples/config.yml");
     worker.work();
+    
+To load the web frontend from a express.js app, assuming it already exists (as `app` local variable):
+
+    var flowQueuesUI = flowqueues.createWebApp(redisClient, "../tests/samples/config.yml")
+    app.use("/flowqueues", flowQueuesUI);
 
 ##Next steps (upcoming features)
 
@@ -59,11 +64,6 @@ Here is how to create a worker. It can be loaded on different process than the e
 In addition to that, flowqueues will provide a binary allowing you to launch it using a single command line like this:
     
     $flowqueues work -c ../tests/samples/config.yml
-
-To load the web frontend from a sinatra app, assuming it already exists (as `app` local variable):
-
-    var flowQueuesUI = flowqueues.createWebApp(redisClient, "../tests/samples/config.yml")
-    app.use("/flowqueues", flowQueuesUI);
 
 ## License 
 
