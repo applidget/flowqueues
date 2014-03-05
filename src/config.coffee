@@ -10,7 +10,7 @@ class Config
     @taskDescriptions = {}
     @firstTaskName = null
     @timeoutInterval ||= 5000
-    @queues = ["critical", "main", "low"]
+    @queues = ["critical", "main", "low"]#TODO: should queues be global or per tasks
     
   addTaskDescription: (taskDesc) ->
     @taskDescriptions[taskDesc.name] = taskDesc

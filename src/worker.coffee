@@ -83,8 +83,6 @@ class Worker
       cbs(length)
 
   performTaskOnJob: (job, taskDescription, queue, next,  callback) ->
-    #TODO: check if task is modified here. It should be !
-    #TODO: register task as running in redis here
     @registerJobInProgress job, taskDescription.name, (err) =>
       process.nextTick () =>
         TaskPerformer.performTask @config.jobsDir(), taskDescription, job, (status) =>
@@ -104,7 +102,6 @@ class Worker
       next()
 
   registerJobInProgress:(job, taskName, cbs) ->
-    #TODO: the encoded data should be already available
     data = helpers.encode(cbs)
     @dataSource.rpush Queue.workingSetNameForTaskName(taskName), data, (err, _) =>
       cbs(err)

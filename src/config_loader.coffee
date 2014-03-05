@@ -13,15 +13,17 @@ class ConfigLoader
   constructor: (@config) ->
     #
   load:(file) ->
-    conf = yaml.safeLoad(fs.readFileSync(file, 'utf8')).flowqueue_graph
-    @config.overridenJobDir = conf.jobs_dir if conf.jobs_dir
-    @config.setFirstTaskName(conf.first_task)
-    for task in conf.tasks
-      do (task) =>
-        concurrency = task.concurrency || 1
-        name = task.name #TODO: handle error if name empty
-        next = task.next || {}
-        taskDesc = new TaskDescription(name, next, concurrency)
-        @config.addTaskDescription(taskDesc)
+    workflows = yaml.safeLoad(fs.readFileSync(file, 'utf8')).workflows
+    for workflow in workflows
+      do (workflow) ->
+        @config.overridenJobDir = conf.jobs_dir if conf.jobs_dir
+        @config.setFirstTaskName(conf.first_task)
+        for task in conf.tasks
+          do (task) =>
+            concurrency = task.concurrency || 1
+            name = task.name #TODO: handle error if name empty
+            next = task.next || {}
+            taskDesc = new TaskDescription(name, next, concurrency)
+            @config.addTaskDescription(taskDesc)
 
 exports.ConfigLoader = ConfigLoader

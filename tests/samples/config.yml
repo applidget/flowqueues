@@ -1,11 +1,24 @@
-flowqueue_graph:
-  jobs_dir: "../tests/samples"
-  first_task: basic_task
-  tasks:
-    - name: basic_task
-      concurrency: 10
-      next:
-        success: basic_task2
+workflows:
+  - name: basic_flow
+    jobs_dir: "../tests/samples"
+    first_task: basic_task
+    tasks:
+      - name: basic_task
+        concurrency: 10
+        next:
+          success: basic_task2
 
-    - name: basic_task2
-      concurrency: 100
+      - name: basic_task2
+        concurrency: 100
+  - name: other_flow
+    jobs_dir: "../tests/samples"
+    first_task: basic_task2
+    tasks:
+      - name: basic_task
+        concurrency: 10
+        next:
+          success: basic_task2
+
+      - name: basic_task2
+        concurrency: 100
+  
