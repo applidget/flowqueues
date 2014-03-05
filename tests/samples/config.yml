@@ -1,6 +1,6 @@
 workflows:
+  jobs_dir: "../tests/samples"
   - name: basic_flow
-    jobs_dir: "../tests/samples"
     first_task: basic_task
     tasks:
       - name: basic_task
@@ -11,7 +11,6 @@ workflows:
       - name: basic_task2
         concurrency: 100
   - name: other_flow
-    jobs_dir: "../tests/samples"
     first_task: basic_task2
     tasks:
       - name: basic_task

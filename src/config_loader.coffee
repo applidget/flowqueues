@@ -14,9 +14,10 @@ class ConfigLoader
     #
   load:(file) ->
     workflows = yaml.safeLoad(fs.readFileSync(file, 'utf8')).workflows
-    for workflow in workflows
+    @config.overridenJobDir = conf.jobs_dir if conf.jobs_dir
+    for workflow in workflows #TODO: should this be called jobDesc or Workflow ? 
       do (workflow) ->
-        @config.overridenJobDir = conf.jobs_dir if conf.jobs_dir
+
         @config.setFirstTaskName(conf.first_task)
         for task in conf.tasks
           do (task) =>
