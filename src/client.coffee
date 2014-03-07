@@ -33,7 +33,7 @@ class Client
     @dataSource.llen Queue.pendingQueueNameForTaskName(jobName, taskName, queue), (err, res) =>
       cbs(res)
 
-  workingTasksCount: (taskName, cbs) ->
+  workingTasksCount: (jobName, taskName, cbs) ->
     @dataSource.llen Queue.workingSetNameForTaskName(jobName, taskName), (err, res) =>
       cbs(res)
   

@@ -75,7 +75,7 @@ class Worker
             schedulePolling()
   
   isWorkerAvailableForTaskName:(jobName, taskName, previouslyRemaining, cbs) ->
-    Queue.workingTasksCount jobName, taskName, (count) =>
+    @client.workingTasksCount jobName, taskName, (count) =>
       jobDescription = @config.jobDescriptions[jobName]
       taskDescription = jobDescription.taskDescriptions[taskName]
       status = false
