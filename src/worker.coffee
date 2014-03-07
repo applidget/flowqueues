@@ -25,6 +25,7 @@ class Worker
     if @working == true
       log "Warning: Already working"
       return
+    log "Flowqueues Starting" if helpers.verbose()
     @working = true
     for name, taskDescription of @config.taskDescriptions
       do (name, taskDescription) =>
