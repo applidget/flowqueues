@@ -15,17 +15,17 @@ class Queue
   @baseKeyName: ->
     return "flowqueues"
   
-  @baseQueueNameForTask:(taskName, ignoreHost = false) ->
+  @baseQueueNameForTask:(jobName, taskName, ignoreHost = false) ->
     interFix = "#{@hostname()}:"
     if ignoreHost == true
       interFix = ""
-    return "#{@baseKeyName()}:#{interFix}#{taskName}"
+    return "#{@baseKeyName()}:#{interFix}#{jobName}:#{taskName}"
           
-  @pendingQueueNameForTaskName: (taskName, queue) ->
+  @pendingQueueNameForTaskName: (jobName, taskName, queue) ->
     ignoreHostName = (taskName == @firstTaskName)
-    return "#{@baseQueueNameForTask(taskName, ignoreHostName)}:#{queue}:pending"
+    return "#{@baseQueueNameForTask(jobName, taskName, ignoreHostName)}:#{queue}:pending"
 
-  @workingSetNameForTaskName:(taskName) ->
+  @workingSetNameForTaskName:(jobName, taskName) ->
     return "#{@baseQueueNameForTask(taskName)}:working"
 exports.Queue = Queue
   

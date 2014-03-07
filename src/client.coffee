@@ -12,28 +12,29 @@ class Client
   constructor: (@config) ->
     @dataSource = @config.dataSource
   
-  enqueueForTask:(taskName, job, queue, cbs = null) ->
+  enqueueForTask:(jobName, taskName, job, queue, cbs = null) ->
     encodedJob = helpers.encode(job)
-    @dataSource.rpush Queue.pendingQueueNameForTaskName(taskName, queue), encodedJob , (err, _) =>
+    @dataSource.rpush Queue.pendingQueueNameForTaskName(jobName, taskName, queue), encodedJob , (err, _) =>
       if cbs?
         cbs(err)
   
-  enqueue:(job, cbs = null) ->
+  enqueue:(jobName, jobData, cbs = null) ->
     queue = "main"
     if  @config.queues.length > 0
       queue = @config.queues[0]
-    @enqueueTo job, queue, cbs
+    @enqueueTo jobName, jobData, queue, cbs
     
-  enqueueTo: (job, queue, cbs = null) ->
-    taskDesc = @config.taskDescriptions[@config.firstTaskName]
-    @enqueueForTask(taskDesc.name, job, queue, cbs)
+  enqueueTo: (jobName, jobData, queue, cbs = null) ->
+    jobDesc = @config.jobDescriptions[jobName] #TODO: handle not found
+    taskDesc = jobDesc.taskDescriptions[jobDesc.firstTaskName]
+    @enqueueForTask(jobName, taskDesc.name, jobData, queue, cbs)
   
-  pendingTasksCount: (taskName, queue, cbs) ->
-    @dataSource.llen Queue.pendingQueueNameForTaskName(taskName, queue), (err, res) =>
+  pendingTasksCount: (jobName, taskName, queue, cbs) ->
+    @dataSource.llen Queue.pendingQueueNameForTaskName(jobName, taskName, queue), (err, res) =>
       cbs(res)
 
   workingTasksCount: (taskName, cbs) ->
-    @dataSource.llen Queue.workingSetNameForTaskName(taskName), (err, res) =>
+    @dataSource.llen Queue.workingSetNameForTaskName(jobName, taskName), (err, res) =>
       cbs(res)
   
   

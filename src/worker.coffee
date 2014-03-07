@@ -70,55 +70,53 @@ class Worker
             next()
             schedulePolling()
   
-  isWorkerAvailableForTaskName:(taskName, previouslyRemaining, cbs) ->
-    @workingCountForTaskName taskName, (count) =>
-      taskDescription = @config.taskDescriptions[taskName]
+  isWorkerAvailableForTaskName:(jobName, taskName, previouslyRemaining, cbs) ->
+    Queue.workingTasksCount jobName, taskName, (count) =>
+      jobDescription = @config.jobDescriptions[jobName]
+      taskDescription = jobDescription.taskDescriptions[taskName]
       status = false
       if count < taskDescription.concurrency
         status = true
       cbs(status, taskDescription.concurrency - count)
 
-  workingCountForTaskName:(taskName, cbs) ->
-    @dataSource.llen Queue.workingSetNameForTaskName(taskName), (err, length) =>
-      cbs(length)
-
-  performTaskOnJob: (job, taskDescription, queue, next,  callback) ->
-    @registerJobInProgress job, taskDescription.name, (err) =>
+  
+  performTaskOnJob: (jobName, job, taskDescription, queue, next,  callback) ->
+    @registerJobInProgress jobName, job, taskDescription.name, (err) =>
       process.nextTick () =>
         TaskPerformer.performTask @config.jobsDir(), taskDescription, job, (status) =>
           @sequencer.scheduleInvocation (done) =>
-            @unregisterJobInProgress job, taskDescription.name, (err) =>
+            @unregisterJobInProgress jobName, job, taskDescription.name, (err) =>
               done()
               nextTaskName = taskDescription.getNextTaskNameForKey(status)
               log "Done #{taskDescription.name}!" if helpers.verbose()
               if !nextTaskName?
                 callback()
               else
-                @client.enqueueForTask nextTaskName, job, queue, () =>
+                @client.enqueueForTask jobName, nextTaskName, job, queue, () =>
                   #TODO: try swaping the two lines. Depth First vs Breadth First execution
-                  @processTaskForName nextTaskName
+                  @processTaskForName jobName, nextTaskName
                   callback()
       #poor lonely instruction. end for @registerJobInProgress
       next()
 
-  registerJobInProgress:(job, taskName, cbs) ->
-    data = helpers.encode(cbs)
-    @dataSource.rpush Queue.workingSetNameForTaskName(taskName), data, (err, _) =>
+  registerJobInProgress:(jobName, jobData, taskName, cbs) ->
+    data = helpers.encode(jobData)
+    @dataSource.rpush Queue.workingSetNameForTaskName(jobName, taskName), data, (err, _) =>
       cbs(err)
 
-  unregisterJobInProgress:(job, taskName, cbs = null) ->
-    data = helpers.encode(cbs)
-    key = Queue.workingSetNameForTaskName(taskName)
+  unregisterJobInProgress:(jobName, jobData, taskName, cbs = null) ->
+    data = helpers.encode(jobData)
+    key = Queue.workingSetNameForTaskName(jobName, taskName)
     @dataSource.lrem key, 1, data, (err, _) =>
       if cbs?
         cbs(err)
   
-  reserveJobOnQueue:(taskName, queue, cbs) ->
-    @dataSource.lpop Queue.pendingQueueNameForTaskName(taskName, queue), (err, res) =>
+  reserveJobOnQueue:(jobName, taskName, queue, cbs) ->
+    @dataSource.lpop Queue.pendingQueueNameForTaskName(jobName, taskName, queue), (err, res) =>
       job = helpers.decode(res)
       cbs(job)
       
-  reserveJob: (taskName, foundJobCbs, queue) ->
+  reserveJob: (jobName, taskName, foundJobCbs, queue) ->
     queueIndex = 0
     foundJob = null
     #This is an async implementation of a break in a for loop using the "async" framework
@@ -131,7 +129,7 @@ class Worker
       foundJobCbs(foundJob, @config.queues[queueIndex])
     
     block = (cbs) =>
-      @reserveJobOnQueue taskName, @config.queues[queueIndex], (job) =>
+      @reserveJobOnQueue jobName, taskName, @config.queues[queueIndex], (job) =>
         if job?
           foundJob = job
         else
