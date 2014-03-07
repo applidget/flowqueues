@@ -27,46 +27,49 @@ class Worker
       return
     log "Flowqueues Starting" if helpers.verbose()
     @working = true
-    for name, taskDescription of @config.taskDescriptions
-      do (name, taskDescription) =>
-        @unregisterWorkingJobsForTask name, () =>
-          @processTaskForName(name)
+    for jobName, jobDescription of @config.jobDescriptions
+      do (jobName, jobDescription) =>         
+        for name, taskDescription of jobDescription.taskDescriptions
+          do (name, taskDescription) =>
+            @unregisterWorkingJobsForTask jobName, name, () =>
+              @processTaskForName(jobName, name)
   
   stop: () ->
     for key, to in @timeOuts
       do (key, to) ->
         clearTimeout(to)
   
-  unregisterWorkingJobsForTask: (taskName, cbs) ->
-    @dataSource.del Queue.workingSetNameForTaskName(taskName), (err, _) ->
+  unregisterWorkingJobsForTask: (jobName, taskName, cbs) ->
+    @dataSource.del Queue.workingSetNameForTaskName(jobName, taskName), (err, _) ->
       cbs()
   
-  processTaskForName: (taskName, previouslyRemaining = 0) ->
+  processTaskForName: (jobName, taskName, previouslyRemaining = 0) ->
+    jobDescription = @config.jobDescriptions[jobName]
     @sequencer.scheduleInvocation (next) =>
-      if @timeOuts[taskName]?
-        clearTimeout(@timeOuts[taskName])
-        @timeOuts[taskName] = null
+      if @timeOuts[jobName]?
+        clearTimeout(@timeOuts[jobName])
+        @timeOuts[jobName] = null
 
       leCallback = (nowRemaining = 0) =>
         log "*** Looking up #{taskName}" if helpers.vverbose()
-        @processTaskForName(taskName, nowRemaining)
+        @processTaskForName(jobName, taskName, nowRemaining)
     
       schedulePolling =  () =>
-        if taskName == @config.firstTaskName
-          @timeOuts[taskName] = setTimeout(leCallback, @config.timeoutInterval)
+        if taskName == jobDescription.firstTaskName
+          @timeOuts[jobName] = setTimeout(leCallback, @config.timeoutInterval)
         
-      @isWorkerAvailableForTaskName taskName, previouslyRemaining, (isAvailable, howMany) =>
+      @isWorkerAvailableForTaskName jobName, taskName, previouslyRemaining, (isAvailable, howMany) =>
         if !isAvailable
           next()
           return
 
-        taskDescription = @config.taskDescriptions[taskName]
-        @reserveJob taskName, (foundJob, queue) =>
+        taskDescription = jobDescription.taskDescriptions[taskName]
+        @reserveJob jobName, taskName, (foundJob, queue) =>
           if foundJob?
             log "Got #{taskName} #{util.inspect foundJob}" if helpers.verbose()
             if howMany > 1
               leCallback(howMany - 1)
-            @performTaskOnJob(foundJob, taskDescription, queue, next, leCallback)
+            @performTaskOnJob(jobName, foundJob, taskDescription, queue, next, leCallback)
           else            
             next()
             schedulePolling()
