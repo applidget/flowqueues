@@ -26,6 +26,6 @@ class Queue
     return "#{@baseQueueNameForTask(jobName, taskName, ignoreHostName)}:#{queue}:pending"
 
   @workingSetNameForTaskName:(jobName, taskName) ->
-    return "#{@baseQueueNameForTask(taskName)}:working"
+    return "#{@baseQueueNameForTask(jobName,taskName)}:working"
 exports.Queue = Queue
   

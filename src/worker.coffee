@@ -51,7 +51,7 @@ class Worker
         @timeOuts[jobName] = null
 
       leCallback = (nowRemaining = 0) =>
-        log "*** Looking up #{taskName}" if helpers.vverbose()
+        log "*** Looking up #{taskName} (#{jobName})" if helpers.vverbose()
         @processTaskForName(jobName, taskName, nowRemaining)
     
       schedulePolling =  () =>
@@ -60,6 +60,7 @@ class Worker
         
       @isWorkerAvailableForTaskName jobName, taskName, previouslyRemaining, (isAvailable, howMany) =>
         if !isAvailable
+          log "Not available #{taskName} on #{jobName}"
           next()
           return
 
@@ -94,6 +95,7 @@ class Worker
               nextTaskName = taskDescription.getNextTaskNameForKey(status)
               log "Done #{taskDescription.name}!" if helpers.verbose()
               if !nextTaskName?
+                log "#{jobName} finished with status #{status} on #{taskDescription.name}" if helpers.vverbose()
                 callback()
               else
                 @client.enqueueForTask jobName, nextTaskName, job, queue, () =>
