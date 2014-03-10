@@ -85,12 +85,12 @@ class Worker
       cbs(status, taskDescription.concurrency - count)
 
   
-  performTaskOnJob: (jobName, job, taskDescription, queue, next,  callback) ->
-    @registerJobInProgress jobName, job, taskDescription.name, (err) =>
+  performTaskOnJob: (jobName, jobData, taskDescription, queue, next,  callback) ->
+    @registerJobInProgress jobName, jobData, taskDescription.name, (err) =>
       process.nextTick () =>
-        TaskPerformer.performTask @config.jobsDir(), taskDescription, job, (status) =>
+        TaskPerformer.performTask @config.jobsDir(), taskDescription, jobData, (status) =>
           @sequencer.scheduleInvocation (done) =>
-            @unregisterJobInProgress jobName, job, taskDescription.name, (err) =>
+            @unregisterJobInProgress jobName, jobData, taskDescription.name, (err) =>
               done()
               nextTaskName = taskDescription.getNextTaskNameForKey(status)
               log "Done #{taskDescription.name}!" if helpers.verbose()
@@ -98,7 +98,7 @@ class Worker
                 log "#{jobName} finished with status #{status} on #{taskDescription.name}" if helpers.vverbose()
                 callback()
               else
-                @client.enqueueForTask jobName, nextTaskName, job, queue, () =>
+                @client.enqueueForTask jobName, nextTaskName, jobData, queue, () =>
                   #TODO: try swaping the two lines. Depth First vs Breadth First execution
                   @processTaskForName jobName, nextTaskName
                   callback()
@@ -106,16 +106,22 @@ class Worker
       next()
 
   registerJobInProgress:(jobName, jobData, taskName, cbs) ->
-    data = helpers.encode(jobData)
+    data = helpers.encode("__")#TODO: use id here
     @dataSource.rpush Queue.workingSetNameForTaskName(jobName, taskName), data, (err, _) =>
       cbs(err)
 
   unregisterJobInProgress:(jobName, jobData, taskName, cbs = null) ->
-    data = helpers.encode(jobData)
+    data = helpers.encode("__")#TODO: use id here
     key = Queue.workingSetNameForTaskName(jobName, taskName)
-    @dataSource.lrem key, 1, data, (err, _) =>
-      if cbs?
-        cbs(err)
+    log "Key is #{key}"
+    @client.workingTasksCount jobName, taskName,(beforeCount) =>
+      log "Count before unregister for #{jobName} and #{taskName} : #{beforeCount}"  
+      @dataSource.lrem key, 1, data, (err, _) =>
+        log("Result is #{_}")
+        @client.workingTasksCount jobName, taskName,(afterCount) =>
+          log "Count after unregister for #{jobName} and #{taskName} : #{afterCount}"  
+          if cbs?
+            cbs(err)
   
   reserveJobOnQueue:(jobName, taskName, queue, cbs) ->
     @dataSource.lpop Queue.pendingQueueNameForTaskName(jobName, taskName, queue), (err, res) =>
