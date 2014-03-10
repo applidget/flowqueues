@@ -11,6 +11,7 @@ helpers = require("./helpers")
 async = require "async"
 log = require("util").log
 util = require("util")
+_ = require("underscore")
 
 class Worker
 
@@ -60,7 +61,6 @@ class Worker
         
       @isWorkerAvailableForTaskName jobName, taskName, previouslyRemaining, (isAvailable, howMany) =>
         if !isAvailable
-          log "Not available #{taskName} on #{jobName}"
           next()
           return
 
@@ -86,11 +86,12 @@ class Worker
 
   
   performTaskOnJob: (jobName, jobData, taskDescription, queue, next,  callback) ->
-    @registerJobInProgress jobName, jobData, taskDescription.name, (err) =>
+    jobClone = _.clone jobData #TODO: use something like ID to identify jobs
+    @registerJobInProgress jobName, jobClone, taskDescription.name, (err) =>
       process.nextTick () =>
         TaskPerformer.performTask @config.jobsDir(), taskDescription, jobData, (status) =>
           @sequencer.scheduleInvocation (done) =>
-            @unregisterJobInProgress jobName, jobData, taskDescription.name, (err) =>
+            @unregisterJobInProgress jobName, jobClone, taskDescription.name, (err) =>
               done()
               nextTaskName = taskDescription.getNextTaskNameForKey(status)
               log "Done #{taskDescription.name}!" if helpers.verbose()
@@ -106,22 +107,16 @@ class Worker
       next()
 
   registerJobInProgress:(jobName, jobData, taskName, cbs) ->
-    data = helpers.encode("__")#TODO: use id here
+    data = helpers.encode(jobData)
     @dataSource.rpush Queue.workingSetNameForTaskName(jobName, taskName), data, (err, _) =>
       cbs(err)
 
   unregisterJobInProgress:(jobName, jobData, taskName, cbs = null) ->
-    data = helpers.encode("__")#TODO: use id here
+    data = helpers.encode(jobData)
     key = Queue.workingSetNameForTaskName(jobName, taskName)
-    log "Key is #{key}"
-    @client.workingTasksCount jobName, taskName,(beforeCount) =>
-      log "Count before unregister for #{jobName} and #{taskName} : #{beforeCount}"  
-      @dataSource.lrem key, 1, data, (err, _) =>
-        log("Result is #{_}")
-        @client.workingTasksCount jobName, taskName,(afterCount) =>
-          log "Count after unregister for #{jobName} and #{taskName} : #{afterCount}"  
-          if cbs?
-            cbs(err)
+    @dataSource.lrem key, 1, data, (err, _) =>
+      if cbs?
+        cbs(err)
   
   reserveJobOnQueue:(jobName, taskName, queue, cbs) ->
     @dataSource.lpop Queue.pendingQueueNameForTaskName(jobName, taskName, queue), (err, res) =>
