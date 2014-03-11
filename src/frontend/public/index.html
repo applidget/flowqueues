@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" ng-app>
+<html lang="en" ng-app="flowqueuesApp">
   <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -42,40 +42,7 @@
       </div>
     </div>
 
-    <div class="container-fluid">
-      <div class="row">
-        <div class="col-sm-3 col-md-2 sidebar">
-          <ul class="nav nav-sidebar">
-            <li class="active"><a href="#">Dashboard</a></li>
-            <li><a href="#">Working</a></li>
-            <li><a href="#">Failures</a></li>
-          </ul>
-          
-        </div>
-        <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
-          <h1 class="page-header">Dashboard</h1>
-
-          <div class="table-responsive" ng-controller="DashboardCtrl">
-            <table class="table table-striped">
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th># Pending tasks</th>
-                  <th># Working tasks</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr ng-repeat="task in tasks">
-                  <td><code>{{ task.name }}</code></td>
-                  <td>{{ task.pending }}</td>
-                  <td>{{ task.working }}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </div>
+    <div ng-view></div>
 
     <!-- Bootstrap core JavaScript
     ================================================== -->
@@ -84,6 +51,7 @@
     <script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
     <script src="./javascripts/docs.min.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.13/angular.min.js"></script>
-    <script src="./javascripts/dashboard.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.13/angular-route.min.js"></script>
+    <script src="./javascripts/app.js"></script>
   </body>
 </html>

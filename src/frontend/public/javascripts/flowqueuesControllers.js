@@ -1,7 +1,7 @@
 function DashboardCtrl($scope, $http) {
-  request = $http.get('./api/tasks');
+  request = $http.get('./api/jobs');
   request.success(function(data) {
-    $scope.tasks = data;
+    $scope.jobs = data;
 
   });
   request.error(function(err) {
