@@ -19,15 +19,14 @@ class WebApp
   init: () ->
     @engine.use(express.static("#{__dirname}/public"))
     
-    @engine.get "/api/tasks", (req, res) =>
-      descriptions = @client.config.taskDescriptions
-      keys = _.keys(descriptions)
+    @engine.get "/api/jobs", (req, res) =>
+      jobDescriptions = @client.config.jobDescriptions
+      keys = _.keys(jobDescriptions)
       descriptions = []
       block = (key, cbs) =>
-        @client.pendingTasksCount key, "main", (pending) =>
-          @client.workingTasksCount key, (working) =>
-            descriptions.push {name: key, pending: pending, working: working }
-            cbs()
+        @client.pendingJobsCount key, (pending) =>
+          descriptions.push { name: key, pending: pending }
+          cbs()
         
       async.each keys, block, (err) =>
         body = JSON.stringify(descriptions)

@@ -6,6 +6,7 @@ Released under the MIT License
 
 helpers = require("./helpers")
 Queue = require("./queue").Queue
+async = require("async")
 
 class Client
 
@@ -32,6 +33,18 @@ class Client
   pendingTasksCount: (jobName, taskName, queue, cbs) ->
     @dataSource.llen Queue.pendingQueueNameForTaskName(jobName, taskName, queue), (err, res) =>
       cbs(res)
+      
+  pendingJobsCount:(jobName, cbs) ->
+    jobDesc = @config.jobDescriptions[jobName]
+    firstTask = jobDesc.taskDescriptions[jobDesc.firstTaskName]
+    count = 0
+    block = (key, blockCbs) =>
+      @pendingTasksCount jobName, firstTask.name, key, (nb) =>
+        count += nb
+        blockCbs()
+
+    async.each @config.queues, block, (err) =>
+      cbs(count)
 
   workingTasksCount: (jobName, taskName, cbs) ->
     @dataSource.llen Queue.workingSetNameForTaskName(jobName, taskName), (err, res) =>
