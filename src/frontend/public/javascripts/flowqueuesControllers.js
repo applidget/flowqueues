@@ -22,7 +22,7 @@ angular.module("flowqueuesControllers", [])
     });
     request.error(function(err) {
       var end = new Date();
-      setTimeout(refresh, Math.max((end - start) * 10, 200));
+      setTimeout(refresh, 20000);
     });  
   };
   refresh();
