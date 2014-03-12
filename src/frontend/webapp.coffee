@@ -39,11 +39,8 @@ class WebApp
       keys = _.keys job.taskDescriptions
       descriptions = []
       block = (key, cbs) =>
-        console.log key
         @client.pendingTasksCount jobName, key, (pending) =>
-          console.log "pending for #{key} is #{pending}"
           @client.workingTasksCount jobName, key, (working) =>
-            console.log "working for #{key} is #{working}"
             descriptions.push {name: key, working: working, pending: pending }
             cbs()
       
