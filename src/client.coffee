@@ -30,21 +30,21 @@ class Client
     taskDesc = jobDesc.taskDescriptions[jobDesc.firstTaskName]
     @enqueueForTask(jobName, taskDesc.name, jobData, queue, cbs)
   
-  pendingTasksCount: (jobName, taskName, queue, cbs) ->
-    @dataSource.llen Queue.pendingQueueNameForTaskName(jobName, taskName, queue), (err, res) =>
-      cbs(res)
-      
-  pendingJobsCount:(jobName, cbs) ->
-    jobDesc = @config.jobDescriptions[jobName]
-    firstTask = jobDesc.taskDescriptions[jobDesc.firstTaskName]
+  pendingTasksCount: (jobName, taskName, cbs) ->
     count = 0
-    block = (key, blockCbs) =>
-      @pendingTasksCount jobName, firstTask.name, key, (nb) =>
+    block = (queue, blockCbs) =>
+      @dataSource.llen Queue.pendingQueueNameForTaskName(jobName, taskName, queue), (err, nb) =>
         count += nb
         blockCbs()
 
     async.each @config.queues, block, (err) =>
       cbs(count)
+      
+  pendingJobsCount:(jobName, cbs) ->
+    jobDesc = @config.jobDescriptions[jobName]
+    firstTask = jobDesc.taskDescriptions[jobDesc.firstTaskName]
+    @pendingTasksCount jobName, firstTask.name, (nb) =>
+      cbs(nb)
 
   workingTasksCount: (jobName, taskName, cbs) ->
     @dataSource.llen Queue.workingSetNameForTaskName(jobName, taskName), (err, res) =>
