@@ -12,6 +12,7 @@ angular.module("flowqueuesControllers", [])
 
 .controller("JobDetailCtrl",['$scope', '$http', '$routeParams', function($scope, $http, $routeParams) {
   request = $http.get("./api/jobs/" + $routeParams.jobName + "/tasks");
+  $scope.job = $routeParams.jobName
   request.success(function(data) {
     $scope.tasks = data;
   });
