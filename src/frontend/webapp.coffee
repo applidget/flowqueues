@@ -17,7 +17,8 @@ class WebApp
     @init()
 
   init: () ->
-    @engine.use(express.static("#{__dirname}/public"),
+    @engine.use(
+      express.static("#{__dirname}/public"),
       express.methodOverride()
     )
     
