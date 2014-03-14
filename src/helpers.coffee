@@ -31,3 +31,4 @@ exports.encode = encode
 exports.decode = decode
 exports.verbose = verbose
 exports.vverbose = vverbose
+exports.clone = clone
