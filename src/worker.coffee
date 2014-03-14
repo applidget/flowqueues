@@ -87,7 +87,7 @@ class Worker
 
   
   performTaskOnJob: (jobName, jobData, taskDescription, queue, next,  callback) ->
-    jobClone = _.clone jobData #TODO: use something like ID to identify jobs
+    jobClone = helpers.clone jobData #TODO: use something like ID to identify jobs
     @registerJobInProgress jobName, jobClone, taskDescription.name, (err) =>
       process.nextTick () =>
         TaskPerformer.performTask @config.jobsDir(), taskDescription, jobData, (status) =>

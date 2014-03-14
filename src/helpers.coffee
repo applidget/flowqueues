@@ -18,6 +18,9 @@ decode = (json) ->
     log "PARSING ERROR: #{util.inspect(util.inspect(json))}"
   return res
 
+clone = (hash) ->
+  return decode(encode(hash))
+
 verbose = () ->
   return vverbose() || process.env.VERBOSE == "true"
   
