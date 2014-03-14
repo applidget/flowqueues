@@ -26,7 +26,7 @@ class Worker
     if @working == true
       log "Warning: Already working"
       return
-    log "Flowqueues Starting" if helpers.verbose()
+    log "Flowqueues Starting"
     @working = true
     for jobName, jobDescription of @config.jobDescriptions
       do (jobName, jobDescription) =>         
@@ -47,18 +47,19 @@ class Worker
   processTaskForName: (jobName, taskName, previouslyRemaining = 0) ->
     jobDescription = @config.jobDescriptions[jobName]
     @sequencer.scheduleInvocation (next) =>
-      if @timeOuts[jobName]?
+
+      if taskName == jobDescription.firstTaskName && @timeOuts[jobName]?
         clearTimeout(@timeOuts[jobName])
         @timeOuts[jobName] = null
 
       leCallback = (nowRemaining = 0) =>
-        log "*** Looking up #{taskName} (#{jobName})" if helpers.vverbose()
         @processTaskForName(jobName, taskName, nowRemaining)
     
       schedulePolling =  () =>
         if taskName == jobDescription.firstTaskName
           @timeOuts[jobName] = setTimeout(leCallback, @config.timeoutInterval)
         
+      log "*** Looking up #{taskName} (#{jobName})" if helpers.vverbose()
       @isWorkerAvailableForTaskName jobName, taskName, previouslyRemaining, (isAvailable, howMany) =>
         if !isAvailable
           next()

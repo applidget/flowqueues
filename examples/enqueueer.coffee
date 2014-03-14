@@ -11,7 +11,7 @@ enqueuer = flowqueues.createClient(redis, "../tests/samples/config.yml")
 
 for i in [1..3000]
   job = {arg1: "arg1", arg2: "arg22"}
-  enqueuer.enqueueTo('basic_flow', job, "low")
+  enqueuer.enqueueTo('basic_flow', job, "main")
   
 #Wait for a few seconds and close redis connection. This could be better done by using async.parallel for example
 #but this is just an example
