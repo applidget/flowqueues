@@ -13,9 +13,9 @@ class Client
   constructor: (@config) ->
     @dataSource = @config.dataSource
   
-  enqueueForTask:(jobName, taskName, job, queue, cbs = null) ->
+  enqueueForTask:(jobName, taskName, job, queue, ignoreHost, cbs = null) ->
     encodedJob = helpers.encode(job)
-    @dataSource.rpush Queue.pendingQueueNameForTaskName(jobName, taskName, queue), encodedJob , (err, _) =>
+    @dataSource.rpush Queue.pendingQueueNameForTaskName(jobName, taskName, queue, ignoreHost), encodedJob , (err, _) =>
       if cbs?
         cbs(err)
   
@@ -28,7 +28,7 @@ class Client
   enqueueTo: (jobName, jobData, queue, cbs = null) ->
     jobDesc = @config.jobDescriptions[jobName] #TODO: handle not found
     taskDesc = jobDesc.taskDescriptions[jobDesc.firstTaskName]
-    @enqueueForTask(jobName, taskDesc.name, jobData, queue, cbs)
+    @enqueueForTask(jobName, taskDesc.name, jobData, queue, true, cbs)
   
   pendingTasksCount: (jobName, taskName, cbs) ->
     count = 0

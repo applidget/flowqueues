@@ -100,7 +100,7 @@ class Worker
                 log "#{jobName} finished with status #{status} on #{taskDescription.name}" if helpers.vverbose()
                 callback()
               else
-                @client.enqueueForTask jobName, nextTaskName, jobData, queue, () =>
+                @client.enqueueForTask jobName, nextTaskName, jobData, queue, false, () =>
                   #TODO: try swaping the two lines. Depth First vs Breadth First execution
                   @processTaskForName jobName, nextTaskName
                   callback()
@@ -120,7 +120,8 @@ class Worker
         cbs(err)
   
   reserveJobOnQueue:(jobName, taskName, queue, cbs) ->
-    @dataSource.lpop Queue.pendingQueueNameForTaskName(jobName, taskName, queue), (err, res) =>
+    ignoreHost = taskName == @config.jobDescriptions[jobName].firstTaskName
+    @dataSource.lpop Queue.pendingQueueNameForTaskName(jobName, taskName, queue, ignoreHost), (err, res) =>
       job = helpers.decode(res)
       cbs(job)
       

@@ -17,12 +17,11 @@ class Queue
   
   @baseQueueNameForTask:(jobName, taskName, ignoreHost = false) ->
     interFix = "#{@hostname()}:"
-    if ignoreHost == true
+    if ignoreHost? && ignoreHost == true
       interFix = ""
     return "#{@baseKeyName()}:#{interFix}#{jobName}:#{taskName}"
           
-  @pendingQueueNameForTaskName: (jobName, taskName, queue) ->
-    ignoreHostName = (taskName == @firstTaskName)
+  @pendingQueueNameForTaskName: (jobName, taskName, queue, ignoreHostName = false) ->
     return "#{@baseQueueNameForTask(jobName, taskName, ignoreHostName)}:#{queue}:pending"
 
   @workingSetNameForTaskName:(jobName, taskName) ->
