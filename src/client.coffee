@@ -32,13 +32,14 @@ class Client
   
   pendingTasksCount: (jobName, taskName, cbs) ->
     count = 0
-    block = (queue, blockCbs) =>
-      @dataSource.llen Queue.pendingQueueNameForTaskName(jobName, taskName, queue), (err, nb) =>
+    block = (key, blockCbs) =>
+      @dataSource.llen key, (err, nb) =>
         count += nb
         blockCbs()
-
-    async.each @config.queues, block, (err) =>
-      cbs(count)
+    
+    @dataSource.keys Queue.pendingQueuePattern(jobName, taskName), (err, list) =>
+      async.each list, block, (err) =>
+        cbs(count)
       
   pendingJobsCount:(jobName, cbs) ->
     jobDesc = @config.jobDescriptions[jobName]
