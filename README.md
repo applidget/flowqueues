@@ -53,9 +53,6 @@ To load the web frontend from a express.js app, assuming it already exists (as `
 
 ##Next steps (upcoming features)
 
-  - Handle different kinds of jobs: if you want to handle different kinds of jobs, the only option available is to create multiple workers. 
-  - Timeout feature: possibility to *kill* a task if it takes too much time
-  - Web UI
   - use node.js cluster module to be crash safe like Resque does
 
 ##Target API
