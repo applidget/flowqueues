@@ -37,7 +37,7 @@ class WebApp
     @engine.get "/api/jobs/:jobName/tasks", (req, res) =>
       jobName = req.params.jobName
       job = @client.config.jobDescriptions[jobName]
-      keys = _.keys job.taskDescriptions
+      keys = job.taskNames
       descriptions = []
       block = (key, cbs) =>
         @client.pendingTasksCount jobName, key, (pending) =>
