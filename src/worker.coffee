@@ -26,7 +26,7 @@ class Worker
     if @working == true
       log "Warning: Already working"
       return
-    log "Flowqueues Starting"
+    log "Flowqueues Starting with queues #{@config.queues.join(",")}"
     @working = true
     for jobName, jobDescription of @config.jobDescriptions
       do (jobName, jobDescription) =>         

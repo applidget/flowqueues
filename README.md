@@ -15,6 +15,7 @@ Flowqueues is library providing queue based processing for node.js. It is develo
 - Backed by redis
 - Jobs are defined as trees of tasks ([Flow based programming](http://en.wikipedia.org/wiki/Flow-based_programming)) by the application
 - Concurrency setting for each task
+- Dequeues jobs based on a list of queue givent by the QUEUES config var (such as QUEUES="critical,main,low,super_low")
 
 ##Basic usage
 
@@ -50,6 +51,7 @@ To load the web frontend from a express.js app, assuming it already exists (as `
 
     var flowQueuesUI = flowqueues.createWebApp(redisClient, "../tests/samples/config.yml")
     app.use("/flowqueues", flowQueuesUI);
+    
 
 ##Next steps (upcoming features)
 
