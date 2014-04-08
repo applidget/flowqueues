@@ -15,7 +15,7 @@ Flowqueues is library providing queue based processing for node.js. It is develo
 - Backed by redis
 - Jobs are defined as trees of tasks ([Flow based programming](http://en.wikipedia.org/wiki/Flow-based_programming)) by the application
 - Concurrency setting for each task
-- Dequeues jobs based on a list of queue givent by the QUEUES config var (such as QUEUES="critical,main,low,super_low")
+- Dequeues jobs based on a list of queues
 
 ##Basic usage
 
@@ -52,6 +52,13 @@ To load the web frontend from a express.js app, assuming it already exists (as `
     var flowQueuesUI = flowqueues.createWebApp(redisClient, "../tests/samples/config.yml")
     app.use("/flowqueues", flowQueuesUI);
     
+##Environment variables
+
+The following environment variables allow you to control the behaviour of flowqueues :
+
+  - QUEUES (default: "critical,main,low") : this must be a comma separated list of queue names that you want flowqueues to process. The order of processing will depend on the order defined in this variable
+  - INTERVAL (default: 5000) : the amount of time in mimmiseconds that flowqueues workers wait before polling the queues when they has nothing to do. Flowqueues workers become idle when there is nothing left to do. Change INTERVAL to a lower value if you need better responsiveness. Be aware though that this can affect CPU
+  - `VERBOSE=true`,`VVERBOSE=true` : this controls the verbosity of flowqueues. `VVERBOSE=true` talks a lot more than `VERBOSE=true`
 
 ##Next steps (upcoming features)
 

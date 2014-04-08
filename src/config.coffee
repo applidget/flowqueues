@@ -8,12 +8,18 @@ class Config
 
   constructor: (@dataSource) ->
     @jobDescriptions = {}
-    @timeoutInterval ||= 5000
+    
+    interval = process.env["INTERVAL"]
+    if interval?
+      @timeoutInterval = parseInt interval
+    else
+      @timeoutInterval = 5000
+        
     queues_config_var = process.env["QUEUES"]
     if queues_config_var?
       @queues = queues_config_var.split(",")
     else
-      @queues = ["critical", "main", "low"]#TODO: should queues be global or per tasks
+      @queues = ["critical", "main", "low"]
     
   jobsDir:() ->
     return @overridenJobDir || process.cwd()
