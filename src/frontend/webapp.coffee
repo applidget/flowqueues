@@ -46,7 +46,7 @@ class WebApp
             cbs()
       
       async.each keys, block, (err) =>
-        res.json descriptions
+        res.json _.sortBy(descriptions, "name")
 
     
 exports.WebApp = WebApp
