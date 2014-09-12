@@ -1,6 +1,6 @@
 {
   "name": "flowqueues",
-  "version": "0.5.8",
+  "version": "0.5.9",
   "description": "Node.js queuing system using capacity constraints",
   "main": "lib/flowqueues.js",
   "directories": {
