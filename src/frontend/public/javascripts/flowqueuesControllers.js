@@ -18,6 +18,7 @@ angular.module("flowqueuesControllers", [])
     request.success(function(data) {
       $scope.tasks = data;
       var end = new Date();
+      $scope.last_updated = end;
       setTimeout(refresh, Math.max((end - start) * 10, 200));
     });
     request.error(function(err) {
