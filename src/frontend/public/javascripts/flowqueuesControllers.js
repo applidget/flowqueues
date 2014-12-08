@@ -14,17 +14,19 @@ angular.module("flowqueuesControllers", [])
   var refresh = function() {
     var start = new Date();
     $scope.job = $routeParams.jobName
-    request = $http.get("./api/jobs/" + $routeParams.jobName + "/tasks");
-    request.success(function(data) {
-      $scope.tasks = data;
-      var end = new Date();
-      $scope.last_updated = end;
-      setTimeout(refresh, Math.max((end - start) * 10, 200));
-    });
-    request.error(function(err) {
-      var end = new Date();
-      setTimeout(refresh, 2000);
-    });  
+    if($routeParams.jobName){
+      request = $http.get("./api/jobs/" + $routeParams.jobName + "/tasks");
+      request.success(function(data) {
+        $scope.tasks = data;
+        var end = new Date();
+        $scope.last_updated = end;
+        setTimeout(refresh, Math.max((end - start) * 10, 200));
+      });
+      request.error(function(err) {
+        var end = new Date();
+        setTimeout(refresh, 2000);
+      });
+    }
   };
   refresh();
 }])
