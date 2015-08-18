@@ -1,6 +1,6 @@
 {
   "name": "flowqueues",
-  "version": "0.5.10",
+  "version": "0.5.11",
   "description": "Node.js queuing system using capacity constraints",
   "main": "lib/flowqueues.js",
   "directories": {
@@ -14,7 +14,7 @@
     "test": "make test"
   },
   "engines": {
-    "node": ">= 0.10.0"
+    "node": ">= 0.12.7"
   },
   "keywords": [
     "queues",
@@ -25,7 +25,7 @@
     "redis": "0.10.x",
     "underscore": "1.6.x",
     "express": "3.4.x",
-    "hiredis": "0.1.x",
+    "hiredis": "0.4.x",
     "coffee-script": "1.7.x",
     "mocha": "1.16.x",
     "async": "0.2.10",
