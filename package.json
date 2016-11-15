@@ -25,11 +25,13 @@
     "redis": "0.10.x",
     "underscore": "1.6.x",
     "express": "3.4.x",
-    "hiredis": "0.4.x",
+    "hiredis": "0.5.x",
     "coffee-script": "1.7.x",
-    "mocha": "1.16.x",
     "async": "0.2.10",
     "js-yaml": "3.0.x"
+  },
+  "devDependencies": {
+    "mocha": "1.16.x"
   },
   "author": "Romain Pechayre <romain.pechayre@applidget.com>",
   "license": "MIT"
